@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'bluerov_data_collector = bluerov.bluerov_data_collector:main',
+            'maddy_data_collector = bluerov.maddy_data_collector:main',
             'data_logger = bluerov.data_logger:main',
         ],
     },
