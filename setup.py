@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'data_collector = bluerov.data_collector:main',
-            'heartbeat = bluerov.data_log_heartbeat:main',
+            'bluerov_data_collector = bluerov.bluerov_data_collector:main',
+            'data_logger = bluerov.data_logger:main',
         ],
     },
 )

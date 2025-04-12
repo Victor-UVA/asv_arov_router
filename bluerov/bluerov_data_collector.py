@@ -118,7 +118,6 @@ class BlueROV_Listener(Node):
             except:
                 pass
         else:
-            # print('Data!')
             pass
 
 
