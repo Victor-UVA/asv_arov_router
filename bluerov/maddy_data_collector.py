@@ -7,10 +7,10 @@ from scipy.spatial.transform import Rotation
 from geometry_msgs.msg import AccelStamped, PoseStamped, TwistStamped
 
 
-class BlueROV_Listener(Node):
+class Maddy_Listener(Node):
     '''
-    Node to get data from BlueROV2 over udp connection via MavLink and publish the data to ROS topics
-
+    Node to get data from Maddy over serial connection via MavLink and publish the data to ROS topics
+    TODO Update data
     Data collected:
     - Acceleration: x, y, z (m/s^2)
     - Yaw rate: psi dot (rad/s)
@@ -18,17 +18,17 @@ class BlueROV_Listener(Node):
     - Local position estimate from DVL: x, y, z (m)
     '''
     def __init__(self):
-        super().__init__('bluerov_listener')
+        super().__init__('maddy_listener')
         self.USING_HARDWARE = False # Toggle for testing when connected to hardware or not
     
-        print('Hi from bluerov node!')
+        print('Hi from Maddy node!')
         
         if self.USING_HARDWARE:
-            self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14550')
+            self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14550') # TODO Update to Maddy serial connection
             self.master.wait_heartbeat()
 
             print("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
-            print('BlueROV connected!.')
+            print('Maddy connected!.')
 
         # Define variables to store the data from the BlueROV between publishing it
         self.accel = [0.0,0.0,0.0]
@@ -36,37 +36,23 @@ class BlueROV_Listener(Node):
         self.pose_estimate = [0.0,0.0,0.0]
         self.yaw_estimate = 0.0
 
-        # Define publishers for data from BlueROV to ROS
-        self.acc_publisher_ = self.create_publisher(AccelStamped, 'bluerov/accel', 10)
-        self.yaw_rate_publisher_ = self.create_publisher(TwistStamped, 'bluerov/yaw_rate', 10)
-        self.pose_publisher_ = self.create_publisher(PoseStamped, 'bluerov/pose_from_dvl', 10)
+        # Define publishers for data from Maddy to ROS
+        self.yaw_rate_publisher_ = self.create_publisher(TwistStamped, 'maddy/yaw_rate', 10)
+        self.pose_publisher_ = self.create_publisher(PoseStamped, 'maddy/pose', 10)
 
 
         # Create timers to aquire and publish data
         publish_timer_period = 0.1 # seconds
         data_timer_period = 0.01
 
-        self.accel_timer = self.create_timer(publish_timer_period, self.accel_publish)
         self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)
         self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
         self.data_timer = self.create_timer(data_timer_period, self.get_bluerov_data)
 
-
-    def accel_publish(self):
-        msg = AccelStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'BlueROV'
-
-        msg.accel.linear.x = self.accel[0]
-        msg.accel.linear.y = self.accel[1]
-        msg.accel.linear.z = self.accel[2]
-
-        self.acc_publisher_.publish(msg)
-
     def yaw_rate_publish(self):
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'BlueROV'
+        msg.header.frame_id = 'Maddy'
 
         msg.twist.angular.z = self.yaw_rate
 
@@ -75,7 +61,7 @@ class BlueROV_Listener(Node):
     def pose_publish(self):
         msg = PoseStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'BlueROV'
+        msg.header.frame_id = 'Maddy'
 
         msg.pose.position.x = self.pose_estimate[0]
         msg.pose.position.y = self.pose_estimate[1]
@@ -96,11 +82,6 @@ class BlueROV_Listener(Node):
                 msg = self.master.recv_match(blocking=True)
                 if msg == None or msg.get_type() == 'BAD_DATA':
                     pass
-
-                elif msg.get_type() == 'RAW_IMU':
-                    self.accel[0] = msg.to_dict()['xacc']
-                    self.accel[1] = msg.to_dict()['yacc']
-                    self.accel[2] = msg.to_dict()['zacc']
 
                 elif msg.get_type() == 'thing':
                     self.yaw_rate = msg.to_dict()['xacc']
@@ -124,11 +105,11 @@ class BlueROV_Listener(Node):
 def main():
     rclpy.init()
 
-    bluerov_listener = BlueROV_Listener()
+    maddy_listener = Maddy_Listener()
 
-    rclpy.spin(bluerov_listener)
+    rclpy.spin(maddy_listener)
 
-    bluerov_listener.destroy_node()
+    maddy_listener.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
