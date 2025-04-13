@@ -18,7 +18,7 @@ class Data_Logger(Node):
         self.maddy_pose_estimate = [0.0,0.0,0.0]
         self.maddy_yaw_estimate = 0.0
         
-        self.LOG_FILE = f'/home/malori/Desktop/{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv' # TODO Change file path to be appropriate for USV computer
+        self.LOG_FILE = f'{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv'
         data_logging_period = 0.1
 
         self.fields = ['timestep','uuv_x','uuv_y','uuv_z','uuv_psi','usv_x','usv_y','usv_psi','gps_x','gps_y','uuv_compass','usv_compass','uuv_gyro','usv_gyro', 'uuv_acc_x', 'uuv_acc_y', 'uuv_acc_z']
