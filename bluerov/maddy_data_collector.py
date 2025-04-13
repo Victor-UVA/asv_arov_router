@@ -10,7 +10,7 @@ from geometry_msgs.msg import PoseStamped, TwistStamped
 class Maddy_Listener(Node):
     '''
     Node to get data from Maddy over serial connection via MavLink and publish the data to ROS topics
-    TODO Update data
+    
     Data collected:
     - Yaw rate: psi dot (rad/s)
     - Yaw estimate: psi (rad)
