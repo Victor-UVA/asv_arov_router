@@ -81,15 +81,16 @@ class Maddy_Listener(Node):
                 if msg == None or msg.get_type() == 'BAD_DATA':
                     pass
 
-                elif msg.get_type() == 'thing':
-                    self.yaw_rate = msg.to_dict()['xacc']
+                elif msg.get_type() == 'SCALED_IMU2':
+                    self.yaw_rate = float(msg.to_dict()['zgyro']) / 1000.0
 
-                elif msg.get_type() == 'thing':
-                    self.pose_estimate[0] = msg.to_dict()['xacc']
-                    self.pose_estimate[1] = msg.to_dict()['yacc']
-                    self.pose_estimate[2] = msg.to_dict()['zacc']
+                elif msg.get_type() == 'LOCAL_POSITION_NED':
+                    self.pose_estimate[0] = msg.to_dict()['x']
+                    self.pose_estimate[1] = msg.to_dict()['y']
+                    self.pose_estimate[2] = msg.to_dict()['z']
 
-                    self.yaw_estimate = msg.to_dict()['zacc']
+                elif msg.get_type() == 'ATTITUDE':
+                    self.yaw_estimate = msg.to_dict()['yaw']
 
                 else:
                     pass

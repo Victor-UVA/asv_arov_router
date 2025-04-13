@@ -35,8 +35,9 @@ For testing with computer webcam:
 
 # Running Things
 ## gscam2 Node Connected to BlueROV Camera
-- ```export GSCAM_CONFIG="v4l2src device=/dev/video1 do-timestamp=true ! queue ! video/x-h264,width=1920,height=1080,framerate=30/1 ! h264parse ! avdec_h264 ! videoconvert"```
+- ```export GSCAM_CONFIG="udpsrc port=5601 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"```
 - ```ros2 run gscam2 gscam_main```
+- Note: The port that the video stream is exposed at on the BlueROV needs to be an odd number so that it's treated as a video stream and not audio.
 
 ## Apriltag Node
 - ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file `ros2 pkg prefix apriltag_ros`/share/apriltag_ros/cfg/tags_36h11.yaml```

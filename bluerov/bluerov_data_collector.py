@@ -19,7 +19,7 @@ class BlueROV_Listener(Node):
     '''
     def __init__(self):
         super().__init__('bluerov_listener')
-        self.USING_HARDWARE = False # Toggle for testing when connected to hardware or not
+        self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
     
         print('Hi from bluerov node!')
         
@@ -28,7 +28,7 @@ class BlueROV_Listener(Node):
             self.master.wait_heartbeat()
 
             print("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
-            print('BlueROV connected!.')
+            print('BlueROV connected!')
 
         # Define variables to store the data from the BlueROV between publishing it
         self.accel = [0.0,0.0,0.0]
@@ -97,20 +97,20 @@ class BlueROV_Listener(Node):
                 if msg == None or msg.get_type() == 'BAD_DATA':
                     pass
 
-                elif msg.get_type() == 'RAW_IMU':
-                    self.accel[0] = msg.to_dict()['xacc']
-                    self.accel[1] = msg.to_dict()['yacc']
-                    self.accel[2] = msg.to_dict()['zacc']
+                elif msg.get_type() == 'SCALED_IMU2':
+                    self.accel[0] = 9.81 * float(msg.to_dict()['xacc']) / 1000.0
+                    self.accel[1] = -9.81 * float(msg.to_dict()['yacc']) / 1000.0
+                    self.accel[2] = -9.81 * float(msg.to_dict()['zacc']) / 1000.0
 
-                elif msg.get_type() == 'thing':
-                    self.yaw_rate = msg.to_dict()['xacc']
+                    self.yaw_rate = -float(msg.to_dict()['zgyro']) / 1000.0
 
-                elif msg.get_type() == 'thing':
-                    self.pose_estimate[0] = msg.to_dict()['xacc']
-                    self.pose_estimate[1] = msg.to_dict()['yacc']
-                    self.pose_estimate[2] = msg.to_dict()['zacc']
+                elif msg.get_type() == 'LOCAL_POSITION_NED':
+                    self.pose_estimate[0] = msg.to_dict()['x']
+                    self.pose_estimate[1] = msg.to_dict()['y']
+                    self.pose_estimate[2] = msg.to_dict()['z']
 
-                    self.yaw_estimate = msg.to_dict()['zacc']
+                elif msg.get_type() == 'ATTITUDE':
+                    self.yaw_estimate = msg.to_dict()['yaw']
 
                 else:
                     pass
