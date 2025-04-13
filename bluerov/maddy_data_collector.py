@@ -18,16 +18,16 @@ class Maddy_Listener(Node):
     '''
     def __init__(self):
         super().__init__('maddy_listener')
-        self.USING_HARDWARE = False # Toggle for testing when connected to hardware or not
+        self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
     
         print('Hi from Maddy node!')
         
         if self.USING_HARDWARE:
-            self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14550') # TODO Update to Maddy serial connection
+            self.master = mavutil.mavlink_connection('/dev/ttyACM0', baud=57600)
             self.master.wait_heartbeat()
 
             print("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
-            print('Maddy connected!.')
+            print('Maddy connected!')
 
         # Define variables to store the data from the BlueROV between publishing it
         self.yaw_rate = 0.0
