@@ -4,7 +4,7 @@ from rclpy.node import Node
 import time
 from scipy.spatial.transform import Rotation
 
-from geometry_msgs.msg import AccelStamped, PoseStamped, TwistStamped
+from geometry_msgs.msg import PoseStamped, TwistStamped
 
 
 class Maddy_Listener(Node):
@@ -12,10 +12,9 @@ class Maddy_Listener(Node):
     Node to get data from Maddy over serial connection via MavLink and publish the data to ROS topics
     TODO Update data
     Data collected:
-    - Acceleration: x, y, z (m/s^2)
     - Yaw rate: psi dot (rad/s)
     - Yaw estimate: psi (rad)
-    - Local position estimate from DVL: x, y, z (m)
+    - Local position estimate from GPS: x, y, z (m)
     '''
     def __init__(self):
         super().__init__('maddy_listener')
@@ -31,7 +30,6 @@ class Maddy_Listener(Node):
             print('Maddy connected!.')
 
         # Define variables to store the data from the BlueROV between publishing it
-        self.accel = [0.0,0.0,0.0]
         self.yaw_rate = 0.0
         self.pose_estimate = [0.0,0.0,0.0]
         self.yaw_estimate = 0.0
@@ -47,7 +45,7 @@ class Maddy_Listener(Node):
 
         self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)
         self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
-        self.data_timer = self.create_timer(data_timer_period, self.get_bluerov_data)
+        self.data_timer = self.create_timer(data_timer_period, self.get_maddy_data)
 
     def yaw_rate_publish(self):
         msg = TwistStamped()
@@ -76,7 +74,7 @@ class Maddy_Listener(Node):
 
         self.pose_publisher_.publish(msg)
 
-    def get_bluerov_data(self):
+    def get_maddy_data(self):
         if self.USING_HARDWARE:
             try:
                 msg = self.master.recv_match(blocking=True)
