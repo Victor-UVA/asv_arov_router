@@ -36,7 +36,7 @@ For testing with computer webcam:
 Used to transform the GPS info from the USV into the robots' global frame.
 
 - ```sudo apt install ros-jazzy-robot-localization```
-- Go [here](http://www.ngdc.noaa.gov/geomag-web) to get magnetic declination for input (at Chris Greene Lake: 9° 49' W  ± 0° 22' -> 0.17133316072 rad)
+- Go [here](http://www.ngdc.noaa.gov/geomag-web) to get magnetic declination for input (at Chris Greene Lake: 9° 49' W  ± 0° 22' -> 0.17133316072 rad) and add it to the ```bluerov_launch.xml``` file
 
 # Running Things
 ## gscam2 Node Connected to BlueROV Camera
@@ -64,7 +64,6 @@ Used to transform the GPS info from the USV into the robots' global frame.
 
 ## Launch File
 - Once the package has been built and sourced, run ```ros2 launch bluerov bluerov_launch.xml```
-- Run ```ros2 service call /datum robot_localization/srv/SetDatum '{geo_pose: {position: {latitude: 38.16441667, longitude: -78.43638856, altitude: 118.1}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}'```
 - Run gstreamer commands with instructions above
 - Run apriltag node with instructions above
 - Run telemetry streaming with instructions below

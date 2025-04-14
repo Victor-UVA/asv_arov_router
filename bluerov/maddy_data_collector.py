@@ -3,9 +3,11 @@ import rclpy
 from rclpy.node import Node
 import time
 from scipy.spatial.transform import Rotation
+import numpy as np
 
 from geometry_msgs.msg import PoseStamped, TwistStamped, TransformStamped
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import Imu
 from tf2_ros import TransformBroadcaster
 
 class Maddy_Listener(Node):
@@ -34,10 +36,14 @@ class Maddy_Listener(Node):
         self.yaw_rate = 0.0
         self.pose_estimate = [0.0,0.0,0.0]
         self.yaw_estimate = 0.0
+        self.imu = Imu()
+        self.imu_orientation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True).as_quat()
+        self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, 90], degrees=True).as_matrix()
 
         # Define publishers for data from Maddy to ROS
         self.yaw_rate_publisher_ = self.create_publisher(TwistStamped, 'maddy/yaw_rate', 10)
-        self.pose_publisher_ = self.create_publisher(Odometry, 'maddy/pose', 10)
+        self.imu_publisher_ = self.create_publisher(Imu, 'maddy/imu', 10)
+        # self.pose_publisher_ = self.create_publisher(Odometry, 'maddy/pose', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
 
@@ -46,7 +52,8 @@ class Maddy_Listener(Node):
         data_timer_period = 0.01
 
         self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)
-        self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
+        self.imu_timer = self.create_timer(data_timer_period, self.imu_publish)
+        # self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
         self.data_timer = self.create_timer(data_timer_period, self.get_maddy_data)
 
     def yaw_rate_publish(self):
@@ -57,6 +64,9 @@ class Maddy_Listener(Node):
         msg.twist.angular.z = self.yaw_rate
 
         self.yaw_rate_publisher_.publish(msg)
+
+    def imu_publish(self):
+        pass
 
     def pose_publish(self):
         msg = Odometry()
@@ -102,6 +112,31 @@ class Maddy_Listener(Node):
 
                 elif msg.get_type() == 'SCALED_IMU2':
                     self.yaw_rate = float(msg.to_dict()['zgyro']) / 1000.0
+
+                    self.imu.header.stamp = self.get_clock().now().to_msg()
+                    self.imu.header.frame_id = '/maddy'
+
+                    self.imu.orientation.x = self.imu_orientation[0]
+                    self.imu.orientation.y = self.imu_orientation[1]
+                    self.imu.orientation.z = self.imu_orientation[2]
+                    self.imu.orientation.w = self.imu_orientation[3]
+
+                    angular_vel_ned = np.array([msg.to_dict()['xgyro'], msg.to_dict()['ygyro'], msg.to_dict()['zgyro']], dtype=float) / 1000
+                    angular_vel_enu = self.ned_to_enu @ angular_vel_ned
+
+                    self.imu.angular_velocity.x = angular_vel_enu[0]
+                    self.imu.angular_velocity.y = angular_vel_enu[1]
+                    self.imu.angular_velocity.z = angular_vel_enu[2]
+
+                    # self.get_logger().info(f"{angular_vel_enu}")
+
+                    linear_accel_ned = 9.81 * np.array([msg.to_dict()['xacc'], msg.to_dict()['yacc'], msg.to_dict()['zacc']]) / 10000
+                    linear_accel_enu = self.ned_to_enu @ linear_accel_ned
+
+                    self.imu.linear_acceleration.x = linear_accel_enu[0]
+                    self.imu.linear_acceleration.y = linear_accel_enu[1]
+                    self.imu.linear_acceleration.z = linear_accel_enu[2]
+
 
                 elif msg.get_type() == 'LOCAL_POSITION_NED':
                     self.pose_estimate[0] = msg.to_dict()['x']
