@@ -55,3 +55,10 @@ For testing with computer webcam:
 
 ## Apriltag Node
 - ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file `ros2 pkg prefix apriltag_ros`/share/apriltag_ros/cfg/tags_36h11.yaml```
+
+## Streaming MavLink Telemetry to Ground Station
+### BlueROV
+- On the USV, run ```mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:172.16.0.255:14550 --out=udpbcast:172.16.0.255:14551```
+
+### USV
+- On the USV, run ```mavproxy.py --master=/dev/ttyACM0 --out=udpbcast:172.16.0.255:14552```
