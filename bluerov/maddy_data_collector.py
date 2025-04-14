@@ -37,7 +37,6 @@ class Maddy_Listener(Node):
         self.pose_estimate = [0.0,0.0,0.0]
         self.yaw_estimate = 0.0
         self.imu = Imu()
-        self.imu_orientation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True).as_quat()
         self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, 90], degrees=True).as_matrix()
         self.gps = NavSatFix()
 
@@ -45,7 +44,7 @@ class Maddy_Listener(Node):
         self.yaw_rate_publisher_ = self.create_publisher(TwistStamped, 'maddy/yaw_rate', 10)
         self.imu_publisher_ = self.create_publisher(Imu, 'maddy/imu', 10)
         self.gps_publisher_ = self.create_publisher(NavSatFix, 'maddy/gps', 10)
-        # self.pose_publisher_ = self.create_publisher(Odometry, 'maddy/pose', 10)
+        self.pose_publisher_ = self.create_publisher(Odometry, 'maddy/pose', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
 
@@ -56,7 +55,7 @@ class Maddy_Listener(Node):
         self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)
         self.imu_timer = self.create_timer(data_timer_period, self.imu_publish)
         self.gps_timer = self.create_timer(data_timer_period, self.gps_publish)
-        # self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
+        self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
         self.data_timer = self.create_timer(data_timer_period, self.get_maddy_data)
 
     def yaw_rate_publish(self):
@@ -85,6 +84,8 @@ class Maddy_Listener(Node):
         msg.pose.pose.position.z = self.pose_estimate[2]
 
         yaw = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate], degrees=True).as_quat()
+
+        # self.get_logger().info(f"{yaw}, {np.sum(np.power(yaw,2))}")
         
         msg.pose.pose.orientation.w = yaw[3]
         msg.pose.pose.orientation.x = yaw[0]
@@ -121,6 +122,8 @@ class Maddy_Listener(Node):
 
                     self.imu.header.stamp = self.get_clock().now().to_msg()
                     self.imu.header.frame_id = '/maddy'
+
+                    self.imu_orientation = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate -90], degrees=True).as_quat()
 
                     self.imu.orientation.x = self.imu_orientation[0]
                     self.imu.orientation.y = self.imu_orientation[1]
@@ -172,6 +175,8 @@ class Maddy_Listener(Node):
                     self.pose_estimate[0] = msg.to_dict()['x']
                     self.pose_estimate[1] = msg.to_dict()['y']
                     self.pose_estimate[2] = msg.to_dict()['z']
+
+                    # self.get_logger().info(f"{msg.to_dict()['x']}, {msg.to_dict()['y']}, {msg.to_dict()['z']}, {self.yaw_estimate}")
 
                 elif msg.get_type() == 'ATTITUDE':
                     self.yaw_estimate = msg.to_dict()['yaw']

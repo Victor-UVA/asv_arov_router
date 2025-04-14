@@ -73,7 +73,7 @@ Used to transform the GPS info from the USV into the robots' global frame.
 - On the USV, run ```mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:172.16.0.255:14550 --out=udpbcast:172.16.0.255:14551```
 
 ### USV
-- On the USV, run ```mavproxy.py --master=/dev/ttyACM0 --out=udpbcast:172.16.0.255:14552```
+- On the USV, run ```mavproxy.py --master=/dev/ttyACM1 --out=udpbcast:172.16.0.255:14552```
 
 
 # Camera Calibration
