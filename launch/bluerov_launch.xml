@@ -11,9 +11,8 @@
         <param name="frame_id" value="bluerov_camera"/>
     </node>
 
-    <node pkg="apriltag_ros" exec="apriltag_node" name="apriltag">
-        <param name="image_rect" value="image_raw"/>
-        <param name="camera_info" value="camera_info"/>
-        <param name="--params-file" value="/home/malori/ros2_ws/bluerov/apriltag_node_config.yaml"/>
-    </node>
+    <!-- <node pkg="apriltag_ros" exec="apriltag_node" name="apriltag"> -->
+        <!-- <param name="image_rect" value="image_raw"/> -->
+        <!-- <param name="camera_info" value="camera_info"/> -->
+    <!-- </node> -->
 </launch>

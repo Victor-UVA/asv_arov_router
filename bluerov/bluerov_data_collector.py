@@ -21,14 +21,14 @@ class BlueROV_Listener(Node):
         super().__init__('bluerov_listener')
         self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
     
-        print('Hi from bluerov node!')
+        self.get_logger().info('Hi from bluerov node!')
         
         if self.USING_HARDWARE:
             self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14551')
             self.master.wait_heartbeat()
 
-            print("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
-            print('BlueROV connected!')
+            self.get_logger().info("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
+            self.get_logger().info('BlueROV connected!')
 
         # Define variables to store the data from the BlueROV between publishing it
         self.accel = [0.0,0.0,0.0]
