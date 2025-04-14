@@ -6,8 +6,11 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
+        "/home/malori/ros2_ws/install/gscam2/include/**",
+        "/home/malori/ros2_ws/install/ros2_shared/include/**",
         "/opt/ros/jazzy/include/**",
-        "/home/maddy/ros2_ws/src/aquaculture/include/**",
+        "/home/malori/ros2_ws/src/gscam2/include/**",
+        "/home/malori/ros2_ws/src/ros2_shared/include/**",
         "/usr/include/**"
       ],
       "name": "ROS",

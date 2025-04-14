@@ -24,7 +24,7 @@ class BlueROV_Listener(Node):
         print('Hi from bluerov node!')
         
         if self.USING_HARDWARE:
-            self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14550')
+            self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14551')
             self.master.wait_heartbeat()
 
             print("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
