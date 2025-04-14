@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="bluerov" exec="bluerov_data_collector" name="bluerov_data_collector" />
+    <node pkg="bluerov" exec="maddy_data_collector" name="maddy_data_collector" />
+    <node pkg="bluerov" exec="data_logger" name="data_logger" />
+
+    <node pkg="gscam2" exec="gscam_main" name="gscam">
+        <param name="camera_name" value="narrow_stereo"/>
+        <param name="camera_info_url" value="file:///home/malori/ros2_ws/bluerov/ost.yaml"/>
+        <param name="gscam_config" value="udpsrc port=5500 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"/>
+        <param name="frame_id" value="bluerov_camera"/>
+    </node>
+
+    <node pkg="apriltag_ros" exec="apriltag_node" name="apriltag">
+        <param name="image_rect" value="image_raw"/>
+        <param name="camera_info" value="camera_info"/>
+        <param name="--params-file" value="/home/malori/ros2_ws/bluerov/apriltag_node_config.yaml"/>
+    </node>
+</launch>

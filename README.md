@@ -6,7 +6,7 @@ ROS 2 nodes for collecting data from the BlueROV and surface vehicle.
 - pymavlink
 - scipy
 
-## gscam2
+## [gscam2](https://github.com/clydemcqueen/gscam2)
 Needed to get the video from the BlueROV as a ROS topic.
 
 1. Install dependencies ```apt-get install -y libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
@@ -29,7 +29,7 @@ For testing with computer webcam:
 - ```ros2 run gscam2 gscam_main```
 - In RViz, create an image visualization and subscribe to /image_raw
 
-## apriltag_ros
+## [apriltag_ros](https://index.ros.org/p/apriltag_ros/#jazzy-overview)
 - ```sudo apt install ros-jazzy-apriltag-ros```
 
 
