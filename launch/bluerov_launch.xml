@@ -17,10 +17,11 @@
     <node pkg="robot_localization" exec="navsat_transform_node" name="usv_gps_transform">
         <param name="magnetic_declination_radians" value="0.17133316072"/>
         <param name="zero_altitude" value="true"/>
-        <param name="datum" value="38.16441667, -78.43638856, 0.0"/>
+        <!-- <param name="datum" value="[38.16441667, -78.43638856, 0.0]"/> -->
         <remap from="odometry/filtered" to="maddy/pose"/>
         <remap from="odometry/gps" to="maddy/pose"/>
         <remap from="imu/data" to="maddy/imu"/>
+        <remap from="gps/fix" to="maddy/gps"/>
     </node>
 
     <!-- <node pkg="apriltag_ros" exec="apriltag_node" name="apriltag" args="params-file /home/malori/ros2_ws/bluerov/apriltag_node_config.yaml"> -->

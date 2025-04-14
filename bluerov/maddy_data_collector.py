@@ -7,7 +7,7 @@ import numpy as np
 
 from geometry_msgs.msg import PoseStamped, TwistStamped, TransformStamped
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, NavSatFix
 from tf2_ros import TransformBroadcaster
 
 class Maddy_Listener(Node):
@@ -39,10 +39,12 @@ class Maddy_Listener(Node):
         self.imu = Imu()
         self.imu_orientation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True).as_quat()
         self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, 90], degrees=True).as_matrix()
+        self.gps = NavSatFix()
 
         # Define publishers for data from Maddy to ROS
         self.yaw_rate_publisher_ = self.create_publisher(TwistStamped, 'maddy/yaw_rate', 10)
         self.imu_publisher_ = self.create_publisher(Imu, 'maddy/imu', 10)
+        self.gps_publisher_ = self.create_publisher(NavSatFix, 'maddy/gps', 10)
         # self.pose_publisher_ = self.create_publisher(Odometry, 'maddy/pose', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
@@ -53,6 +55,7 @@ class Maddy_Listener(Node):
 
         self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)
         self.imu_timer = self.create_timer(data_timer_period, self.imu_publish)
+        self.gps_timer = self.create_timer(data_timer_period, self.gps_publish)
         # self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
         self.data_timer = self.create_timer(data_timer_period, self.get_maddy_data)
 
@@ -66,7 +69,10 @@ class Maddy_Listener(Node):
         self.yaw_rate_publisher_.publish(msg)
 
     def imu_publish(self):
-        pass
+        self.imu_publisher_.publish(self.imu)
+        
+    def gps_publish(self):
+        self.gps_publisher_.publish(self.gps)
 
     def pose_publish(self):
         msg = Odometry()
@@ -130,13 +136,37 @@ class Maddy_Listener(Node):
 
                     # self.get_logger().info(f"{angular_vel_enu}")
 
-                    linear_accel_ned = 9.81 * np.array([msg.to_dict()['xacc'], msg.to_dict()['yacc'], msg.to_dict()['zacc']]) / 10000
+                    linear_accel_ned = -9.81 * np.array([msg.to_dict()['xacc'], msg.to_dict()['yacc'], msg.to_dict()['zacc']], dtype=float) / 1000
                     linear_accel_enu = self.ned_to_enu @ linear_accel_ned
 
                     self.imu.linear_acceleration.x = linear_accel_enu[0]
                     self.imu.linear_acceleration.y = linear_accel_enu[1]
                     self.imu.linear_acceleration.z = linear_accel_enu[2]
 
+                    # self.get_logger().info(f"{linear_accel_enu}")
+
+                elif msg.get_type() == 'GPS_RAW_INT':
+                    self.gps.header.stamp = self.get_clock().now().to_msg()
+                    self.gps.header.frame_id = '/maddy'
+
+
+                    if msg.to_dict()['fix_type'] == 1:
+                        status = -1
+                    elif msg.to_dict()['fix_type'] == 2 or msg.to_dict()['fix_type'] == 3:
+                        status = 0
+                    elif msg.to_dict()['fix_type'] == 4:
+                        status = 1
+                    elif msg.to_dict()['fix_type'] == 5 or msg.to_dict()['fix_type'] == 6:
+                        status = 2
+                    else:
+                        status = -1
+
+                    self.gps.status.status = status
+                    self.gps.status.service = 1
+
+                    self.gps.latitude = msg.to_dict()['lat'] / (10**7)
+                    self.gps.longitude = msg.to_dict()['lon'] / (10**7)
+                    self.gps.altitude = msg.to_dict()['alt'] / 1000.0
 
                 elif msg.get_type() == 'LOCAL_POSITION_NED':
                     self.pose_estimate[0] = msg.to_dict()['x']
