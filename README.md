@@ -32,6 +32,11 @@ For testing with computer webcam:
 ## [apriltag_ros](https://index.ros.org/p/apriltag_ros/#jazzy-overview)
 - ```sudo apt install ros-jazzy-apriltag-ros```
 
+## [robot_localization](http://docs.ros.org/en/jade/api/robot_localization/html/index.html)
+Used to transform the GPS info from the USV into the robots' global frame.
+
+- ```sudo apt install ros-jazzy-robot-localization```
+- Go [here](http://www.ngdc.noaa.gov/geomag-web) to get magnetic declination for input (at Chris Greene Lake: 9° 49' W  ± 0° 22' -> 0.17133316072 rad)
 
 # Running Things
 ## gscam2 Node Connected to BlueROV Camera
@@ -57,6 +62,12 @@ For testing with computer webcam:
 ## Apriltag Node
 - ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file /home/malori/ros2_ws/bluerov/apriltag_node_config.yaml```
 
+## Launch File
+- Once the package has been built and sourced, run ```ros2 launch bluerov bluerov_launch.xml```
+- Run ```ros2 service call /datum robot_localization/srv/SetDatum '{geo_pose: {position: {latitude: 38.16441667, longitude: -78.43638856, altitude: 118.1}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}'```
+- Run gstreamer commands with instructions above
+- Run apriltag node with instructions above
+- Run telemetry streaming with instructions below
 
 ## Streaming MavLink Telemetry to Ground Station
 ### BlueROV
@@ -74,6 +85,3 @@ The gscam2 node needs the camera calibration data from the BlueROV's camera so t
 - Launch the calibration node ```ros2 run camera_calibration cameracalibrator --size 7x9 --square 0.015 --ros-args -r image:=/image_raw```
 - [Link](https://medium.com/starschema-blog/offline-camera-calibration-in-ros-2-45e81df12555) to post with directions and additional info
 - [Other link](https://docs.nav2.org/tutorials/docs/camera_calibration.html) with more details
-
-
-ros2 run gscam2 gscam_main --ros-args -p camera_info_url:="file:///home/malori/ros2_ws/bluerov/ost.yaml"

@@ -14,6 +14,11 @@
     <node name="bluerov_camera_transform" pkg="tf2_ros" exec="static_transform_publisher" args="0.15 0 0 -1.571 -3.141 -1.571 /bluerov /bluerov_camera"/>
     <node name="bluerov_odom_transform" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /bluerov_odom /bluerov"/>
 
+    <node pkg="robot_localization" exec="navsat_transform_node" name="usv_gps_transform">
+        <param name="magnetic_declination_radians" value="0.17133316072"/>
+        <param name="zero_altitude" value="true"/>
+    </node>
+
     <!-- <node pkg="apriltag_ros" exec="apriltag_node" name="apriltag" args="params-file /home/malori/ros2_ws/bluerov/apriltag_node_config.yaml"> -->
         <!-- <param name="image_rect" value="/image_raw"/> -->
         <!-- <param name="camera_info" value="/camera_info"/> -->
