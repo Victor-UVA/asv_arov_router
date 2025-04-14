@@ -49,12 +49,14 @@ For testing with computer webcam:
     - This forwards the video stream from the BlueROV to USV to the ground station computer
 - To get the video stream into ROS, on the ground station:
     - ```export GSCAM_CONFIG="udpsrc port=5500 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"```
-    - ```ros2 run gscam2 gscam_main```
+    - ```ros2 run gscam2 gscam_main --ros-args -p camera_info_url:="file:///home/malori/ros2_ws/bluerov/ost.yaml" -p camera_name:="narrow_stereo"```
 - To get the video stream in QGroundControl, on the ground station:
     - Change the port that QGroundControl receives video on to ```5502``` (or change the port that the stream is forwarded on to ```5600``` in the command on the USV)
 
+
 ## Apriltag Node
-- ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file `ros2 pkg prefix apriltag_ros`/share/apriltag_ros/cfg/tags_36h11.yaml```
+- ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file /home/malori/ros2_ws/bluerov/apriltag_node_config.yaml```
+
 
 ## Streaming MavLink Telemetry to Ground Station
 ### BlueROV
@@ -62,3 +64,16 @@ For testing with computer webcam:
 
 ### USV
 - On the USV, run ```mavproxy.py --master=/dev/ttyACM0 --out=udpbcast:172.16.0.255:14552```
+
+
+# Camera Calibration
+The gscam2 node needs the camera calibration data from the BlueROV's camera so that it can pass it into the /camera_info topic that the apriltag node then uses to calibrate its detections.  To do the calibration:
+- Install ROS2 camera calibration node by running ```sudo apt install ros-jazzy-camera-calibration```
+- Print a calibration pattern (details in linked post below)
+- Stream the camera feed from the BlueROV and run gscam2 as above
+- Launch the calibration node ```ros2 run camera_calibration cameracalibrator --size 7x9 --square 0.015 --ros-args -r image:=/image_raw```
+- [Link](https://medium.com/starschema-blog/offline-camera-calibration-in-ros-2-45e81df12555) to post with directions and additional info
+- [Other link](https://docs.nav2.org/tutorials/docs/camera_calibration.html) with more details
+
+
+ros2 run gscam2 gscam_main --ros-args -p camera_info_url:="file:///home/malori/ros2_ws/bluerov/ost.yaml"
