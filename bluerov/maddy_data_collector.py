@@ -23,7 +23,7 @@ class Maddy_Listener(Node):
         print('Hi from Maddy node!')
         
         if self.USING_HARDWARE:
-            self.master = mavutil.mavlink_connection('/dev/ttyACM0', baud=57600)
+            self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14552')
             self.master.wait_heartbeat()
 
             print("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
