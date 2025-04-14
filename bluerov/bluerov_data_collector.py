@@ -4,7 +4,9 @@ from rclpy.node import Node
 import time
 from scipy.spatial.transform import Rotation
 
-from geometry_msgs.msg import AccelStamped, PoseStamped, TwistStamped
+from geometry_msgs.msg import AccelStamped, TwistStamped, TransformStamped
+from nav_msgs.msg import Odometry
+from tf2_ros import TransformBroadcaster
 
 
 class BlueROV_Listener(Node):
@@ -39,7 +41,8 @@ class BlueROV_Listener(Node):
         # Define publishers for data from BlueROV to ROS
         self.acc_publisher_ = self.create_publisher(AccelStamped, 'bluerov/accel', 10)
         self.yaw_rate_publisher_ = self.create_publisher(TwistStamped, 'bluerov/yaw_rate', 10)
-        self.pose_publisher_ = self.create_publisher(PoseStamped, 'bluerov/pose_from_dvl', 10)
+        self.pose_publisher_ = self.create_publisher(Odometry, 'bluerov/pose_from_dvl', 10)
+        self.tf_broadcaster = TransformBroadcaster(self)
 
 
         # Create timers to aquire and publish data
@@ -55,7 +58,7 @@ class BlueROV_Listener(Node):
     def accel_publish(self):
         msg = AccelStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'BlueROV'
+        msg.header.frame_id = '/bluerov'
 
         msg.accel.linear.x = self.accel[0]
         msg.accel.linear.y = self.accel[1]
@@ -66,29 +69,46 @@ class BlueROV_Listener(Node):
     def yaw_rate_publish(self):
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'BlueROV'
+        msg.header.frame_id = '/bluerov'
 
         msg.twist.angular.z = self.yaw_rate
 
         self.yaw_rate_publisher_.publish(msg)
 
     def pose_publish(self):
-        msg = PoseStamped()
+        msg = Odometry()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'BlueROV'
+        msg.header.frame_id = '/world'
+        msg.child_frame_id = '/bluerov_odom'
 
-        msg.pose.position.x = self.pose_estimate[0]
-        msg.pose.position.y = self.pose_estimate[1]
-        msg.pose.position.z = self.pose_estimate[2]
+        msg.pose.pose.position.x = self.pose_estimate[0]
+        msg.pose.pose.position.y = self.pose_estimate[1]
+        msg.pose.pose.position.z = self.pose_estimate[2]
 
         yaw = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate], degrees=True).as_quat()
         
-        msg.pose.orientation.w = yaw[3]
-        msg.pose.orientation.x = yaw[0]
-        msg.pose.orientation.y = yaw[1]
-        msg.pose.orientation.z = yaw[2]
+        msg.pose.pose.orientation.w = yaw[3]
+        msg.pose.pose.orientation.x = yaw[0]
+        msg.pose.pose.orientation.y = yaw[1]
+        msg.pose.pose.orientation.z = yaw[2]
 
         self.pose_publisher_.publish(msg)
+
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = '/world'
+        t.child_frame_id = '/bluerov_odom'
+
+        t.transform.translation.x = self.pose_estimate[0]
+        t.transform.translation.y = self.pose_estimate[1]
+        t.transform.translation.z = self.pose_estimate[2]
+
+        t.transform.rotation.x = yaw[0]
+        t.transform.rotation.y = yaw[1]
+        t.transform.rotation.z = yaw[2]
+        t.transform.rotation.w = yaw[3]
+
+        self.tf_broadcaster.sendTransform(t)
 
     def get_bluerov_data(self):
         if self.USING_HARDWARE:
