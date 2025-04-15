@@ -34,11 +34,21 @@ For testing with computer webcam:
 
 ## [robot_localization](http://docs.ros.org/en/jade/api/robot_localization/html/index.html)
 Used to transform the GPS info from the USV into the robots' global frame.
+No longer needed, but might be useful in the future.
 
 - ```sudo apt install ros-jazzy-robot-localization```
 - Go [here](http://www.ngdc.noaa.gov/geomag-web) to get magnetic declination for input (at Chris Greene Lake: 9° 49' W  ± 0° 22' -> 0.17133316072 rad) and add it to the ```bluerov_launch.xml``` file
 
 # Running Things
+## Hardware Setup
+- Power on USV and turn on its computer
+- Power on and seal up BlueROV
+- Connect BlueROV tether to the USV
+- Set up router with NETGEAR21 and connect ground station to it (if USV doesn't connected automatically, get a screen)
+    - Password: breezygadfly716
+    - Set ground station IP to 192.168.1.35
+- Run ```ssh maddy@192.168.1.4``` to connect to USV from ground station to run the neccessary commands below
+
 ## gscam2 Node Connected to BlueROV Camera
 ### To Get Video on USV
 - ```export GSCAM_CONFIG="udpsrc port=5601 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"```
@@ -47,9 +57,9 @@ Used to transform the GPS info from the USV into the robots' global frame.
 
 ### To Stream Video to Ground Station
 - On the USV computer:
-    - If only getting video on ROS, run ```gst-launch-1.0 udpsrc port=5601 ! queue ! udpsink host=172.16.0.16 port=5500```
-    - If only getting video on QGroundControl, run ```gst-launch-1.0 udpsrc port=5601 ! queue ! udpsink host=172.16.0.16 port=5502```
-    - If getting video in ROS and on QGroundControl, run ```gst-launch-1.0 udpsrc port=5601 ! queue ! multiudpsink clients=172.16.0.16:5500,172.16.0.16:5502```
+    - If only getting video on ROS, run ```gst-launch-1.0 udpsrc port=5601 ! queue ! udpsink host=192.168.1.35 port=5500```
+    - If only getting video on QGroundControl, run ```gst-launch-1.0 udpsrc port=5601 ! queue ! udpsink host=192.168.1.35 port=5502```
+    - If getting video in ROS and on QGroundControl, run ```gst-launch-1.0 udpsrc port=5601 ! queue ! multiudpsink clients=192.168.1.35:5500,192.168.1.35:5502```
     - Note: Change host/clients as needed to the computer receiving the stream
     - This forwards the video stream from the BlueROV to USV to the ground station computer
 - To get the video stream into ROS, on the ground station:
@@ -70,10 +80,10 @@ Used to transform the GPS info from the USV into the robots' global frame.
 
 ## Streaming MavLink Telemetry to Ground Station
 ### BlueROV
-- On the USV, run ```mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:172.16.0.255:14550 --out=udpbcast:172.16.0.255:14551```
+- On the USV, run ```mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:192.168.1.255:14550 --out=udpbcast:192.168.1.255:14551```
 
 ### USV
-- On the USV, run ```mavproxy.py --master=/dev/ttyACM1 --out=udpbcast:172.16.0.255:14552```
+- On the USV, run ```mavproxy.py --master=/dev/ttyACM1 --out=udpbcast:192.168.1.255:14552 --out=udpbcast:192.168.1.255:14553```
 
 
 # Camera Calibration
