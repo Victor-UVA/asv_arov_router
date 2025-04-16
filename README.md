@@ -83,7 +83,8 @@ No longer needed, but might be useful in the future.
 - On the USV, run ```mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:192.168.1.255:14550 --out=udpbcast:192.168.1.255:14551```
 
 ### USV
-- On the USV, run ```mavproxy.py --master=/dev/ttyACM1 --out=udpbcast:192.168.1.255:14552 --out=udpbcast:192.168.1.255:14553```
+- On the USV, run ```mavproxy.py --master=/dev/ttyACM0 --out=udpbcast:192.168.1.255:14552 --out=udpbcast:192.168.1.255:14553```
+    - Note: Master may be ```/dev/ttyACM0``` or ```/dev/ttyACM1```, it seems to change sometimes.  If needed, run ```ls /dev/tty*``` to find out (run that with the Pixhawk on the USV plugged in with the USB cord and with it unplugged, and find the difference in the output)
 
 
 # Camera Calibration
