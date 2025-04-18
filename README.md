@@ -64,13 +64,13 @@ No longer needed, but might be useful in the future.
     - This forwards the video stream from the BlueROV to USV to the ground station computer
 - To get the video stream into ROS, on the ground station:
     - ```export GSCAM_CONFIG="udpsrc port=5500 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"```
-    - ```ros2 run gscam2 gscam_main --ros-args -p camera_info_url:="file:///home/malori/ros2_ws/bluerov/ost.yaml" -p camera_name:="narrow_stereo"```
+    - ```ros2 run gscam2 gscam_main --ros-args -p camera_info_url:="file:///home/malori/ros2_ws/bluerov/config/ost.yaml" -p camera_name:="narrow_stereo"```
 - To get the video stream in QGroundControl, on the ground station:
     - Change the port that QGroundControl receives video on to ```5502``` (or change the port that the stream is forwarded on to ```5600``` in the command on the USV)
 
 
 ## Apriltag Node
-- ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file /home/malori/ros2_ws/bluerov/apriltag_node_config.yaml```
+- ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file /home/malori/ros2_ws/bluerov/config/apriltag_node_config.yaml```
 
 ## Launch File
 - Once the package has been built and sourced, run ```ros2 launch bluerov bluerov_launch.xml```
