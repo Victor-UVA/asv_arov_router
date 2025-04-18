@@ -32,7 +32,7 @@ def generate_launch_description():
         name="gscam",
         parameters=[
             {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(f"{os.environ.get("HOME")}", "ros2_ws/bluerov/config/ost.yaml")}"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('bluerov'), 'config', 'ost.yaml')}"},
             {"gscam_config": "udpsrc port=5500 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"},
             {"frame_id": "bluerov_camera"}
         ]
