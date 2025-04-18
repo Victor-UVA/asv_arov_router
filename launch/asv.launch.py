@@ -33,8 +33,11 @@ def generate_launch_description():
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('bluerov'), 'config', 'ost.yaml')}"},
-            {"gscam_config": "udpsrc port=5500 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"},
+            {"gscam_config": "udpsrc port=5601 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"},
             {"frame_id": "bluerov_camera"}
+        ],
+        remappings=[
+            ('/image_raw', '/image_rect')
         ]
     )
 
@@ -50,9 +53,12 @@ def generate_launch_description():
         name="apriltag",
         parameters=[
             config,
-            {"image_rect": "/image_raw"},
+            {"image_rect": "/image_rect"},
             {"camera_info": "/camera_info"}
         ]
+        # remappings=[
+        #     ('/image_rect', ' /image_raw')
+        # ]
     )
 
     # tf2 static transforms
