@@ -73,9 +73,8 @@ No longer needed, but might be useful in the future.
 - ```ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/image_raw -r camera_info:=/camera_info --params-file /home/malori/ros2_ws/bluerov/config/apriltag_node_config.yaml```
 
 ## Launch File
-- Once the package has been built and sourced, run ```ros2 launch bluerov bluerov_launch.xml```
+- Once the package has been built and sourced, run ```ros2 launch bluerov bluerov.launch.py```
 - Run gstreamer commands with instructions above
-- Run apriltag node with instructions above
 - Run telemetry streaming with instructions below
 
 ## Streaming MavLink Telemetry to Ground Station

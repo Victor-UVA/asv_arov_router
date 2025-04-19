@@ -23,7 +23,7 @@ class BlueROV_Listener(Node):
         super().__init__('bluerov_listener')
         self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
     
-        self.get_logger().info('Hi from bluerov node!')
+        self.get_logger().info('Hi from BlueROV node!')
         
         if self.USING_HARDWARE:
             self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14551')
