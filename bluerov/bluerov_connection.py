@@ -8,18 +8,12 @@ from nav_msgs.msg import Odometry
 from tf2_ros import TransformBroadcaster
 
 
-class BlueROV_Listener(Node):
+class BlueROV_Connection(Node):
     '''
-    Node to get data from BlueROV2 over udp connection via MavLink and publish the data to ROS topics
-
-    Data collected:
-    - Acceleration: x, y, z (m/s^2)
-    - Yaw rate: psi dot (rad/s)
-    - Yaw estimate: psi (rad)
-    - Local position estimate from DVL: x, y, z (m)
+    Node to connect to the BlueROV2 over mavlink to translate data from it into ROS topics and allow for autonomous control.
     '''
     def __init__(self):
-        super().__init__('bluerov_listener')
+        super().__init__('bluerov_connection')
         self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
     
         self.get_logger().info('Hi from BlueROV node!')
@@ -33,13 +27,13 @@ class BlueROV_Listener(Node):
 
         # Define variables to store the data from the BlueROV between publishing it
         self.accel = [0.0,0.0,0.0]
-        self.yaw_rate = 0.0
+        self.gyro_rates = [0.0, 0.0, 0.0]
         self.pose_estimate = [0.0,0.0,0.0]
-        self.yaw_estimate = 0.0
+        self.orientation_estimate = [0.0,0.0,0.0]
 
         # Define publishers for data from BlueROV to ROS
         self.acc_publisher_ = self.create_publisher(AccelStamped, 'bluerov/accel', 10)
-        self.yaw_rate_publisher_ = self.create_publisher(TwistStamped, 'bluerov/yaw_rate', 10)
+        self.gyro_rates_publisher_ = self.create_publisher(TwistStamped, 'bluerov/gyro_rates', 10)
         self.pose_publisher_ = self.create_publisher(Odometry, 'bluerov/pose_from_dvl', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
@@ -49,7 +43,7 @@ class BlueROV_Listener(Node):
         data_timer_period = 0.005
 
         self.accel_timer = self.create_timer(publish_timer_period, self.accel_publish)
-        self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)
+        self.gyro_rates_timer = self.create_timer(publish_timer_period, self.gyro_rates_publish)
         self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
         self.data_timer = self.create_timer(data_timer_period, self.get_bluerov_data)
 
@@ -65,14 +59,16 @@ class BlueROV_Listener(Node):
 
         self.acc_publisher_.publish(msg)
 
-    def yaw_rate_publish(self):
+    def gyro_rates_publish(self):
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = '/bluerov'
 
-        msg.twist.angular.z = self.yaw_rate
+        msg.twist.angular.x = self.gyro_rates[0]
+        msg.twist.angular.y = self.gyro_rates[1]
+        msg.twist.angular.z = self.gyro_rates[2]
 
-        self.yaw_rate_publisher_.publish(msg)
+        self.gyro_rates_publisher_.publish(msg)
 
     def pose_publish(self):
         msg = Odometry()
@@ -84,7 +80,7 @@ class BlueROV_Listener(Node):
         msg.pose.pose.position.y = self.pose_estimate[1]
         msg.pose.pose.position.z = self.pose_estimate[2]
 
-        yaw = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate], degrees=True).as_quat()
+        yaw = Rotation.from_euler('xyz', self.orientation_estimate, degrees=True).as_quat()
         
         msg.pose.pose.orientation.w = yaw[3]
         msg.pose.pose.orientation.x = yaw[0]
@@ -121,7 +117,10 @@ class BlueROV_Listener(Node):
                     self.accel[1] = -9.81 * float(msg.to_dict()['yacc']) / 1000.0
                     self.accel[2] = -9.81 * float(msg.to_dict()['zacc']) / 1000.0
 
-                    self.yaw_rate = -float(msg.to_dict()['zgyro']) / 1000.0
+                    # TODO Verify orientation of gyro axes (originally had minus on z)
+                    self.gyro_rates[0] = float(msg.to_dict()['xgyro']) / 1000.0
+                    self.gyro_rates[1] = -float(msg.to_dict()['ygyro']) / 1000.0
+                    self.gyro_rates[2] = -float(msg.to_dict()['zgyro']) / 1000.0
 
                 elif msg.get_type() == 'LOCAL_POSITION_NED':
                     self.pose_estimate[0] = msg.to_dict()['x']
@@ -129,7 +128,9 @@ class BlueROV_Listener(Node):
                     self.pose_estimate[2] = msg.to_dict()['z']
 
                 elif msg.get_type() == 'ATTITUDE':
-                    self.yaw_estimate = msg.to_dict()['yaw']
+                    self.orientation_estimate[0] = msg.to_dict()['roll']
+                    self.orientation_estimate[1] = msg.to_dict()['pitch']
+                    self.orientation_estimate[2] = msg.to_dict()['yaw']
 
                 else:
                     pass
@@ -143,11 +144,11 @@ class BlueROV_Listener(Node):
 def main():
     rclpy.init()
 
-    bluerov_listener = BlueROV_Listener()
+    bluerov_connection = BlueROV_Connection()
 
-    rclpy.spin(bluerov_listener)
+    rclpy.spin(bluerov_connection)
 
-    bluerov_listener.destroy_node()
+    bluerov_connection.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

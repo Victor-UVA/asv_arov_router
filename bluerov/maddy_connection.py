@@ -9,17 +9,12 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu, NavSatFix
 from tf2_ros import TransformBroadcaster
 
-class Maddy_Listener(Node):
+class Maddy_Connection(Node):
     '''
-    Node to get data from Maddy over serial connection via MavLink and publish the data to ROS topics
-    
-    Data collected:
-    - Yaw rate: psi dot (rad/s)
-    - Yaw estimate: psi (rad)
-    - Local position estimate from GPS: x, y, z (m)
+    Node to connect to Maddy (ASv) over mavlink to translate data from it into ROS topics and allow for autonomous control.
     '''
     def __init__(self):
-        super().__init__('maddy_listener')
+        super().__init__('maddy_connection')
         self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
     
         self.get_logger().info('Hi from Maddy node!')
@@ -192,11 +187,11 @@ class Maddy_Listener(Node):
 def main():
     rclpy.init()
 
-    maddy_listener = Maddy_Listener()
+    maddy_connection = Maddy_Connection()
 
-    rclpy.spin(maddy_listener)
+    rclpy.spin(maddy_connection)
 
-    maddy_listener.destroy_node()
+    maddy_connection.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

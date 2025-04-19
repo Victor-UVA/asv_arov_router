@@ -16,7 +16,7 @@ class Data_Logger(Node):
         super().__init__('data_logger')
 
         self.bluerov_accel = [0.0,0.0,0.0]
-        self.bluerov_yaw_rate = 0.0
+        self.bluerov_gyro_rates = [0.0,0.0,0.0]
         self.bluerov_pose_estimate = [0.0,0.0,0.0]
         self.bluerov_yaw_estimate = 0.0
 
@@ -45,12 +45,12 @@ class Data_Logger(Node):
             10)
         self.bluerov_accel_sub  # prevent unused variable warning
 
-        self.bluerov_yaw_rate_sub = self.create_subscription(
+        self.bluerov_gyro_rates_sub = self.create_subscription(
             TwistStamped,
-            'bluerov/yaw_rate',
-            self.bluerov_yaw_rate_callback,
+            'bluerov/gyro_rates',
+            self.bluerov_gyro_rates_callback,
             10)
-        self.bluerov_yaw_rate_sub  # prevent unused variable warning
+        self.bluerov_gyro_rates_sub  # prevent unused variable warning
 
         self.bluerov_pose_sub = self.create_subscription(
             Odometry,
@@ -89,8 +89,10 @@ class Data_Logger(Node):
         self.bluerov_accel[1] = msg.accel.linear.y
         self.bluerov_accel[2] = msg.accel.linear.z
 
-    def bluerov_yaw_rate_callback(self, msg):
-        self.bluerov_yaw_rate = msg.twist.angular.z
+    def bluerov_gyro_rates_callback(self, msg):
+        self.bluerov_gyro_rates[0] = msg.twist.angular.x
+        self.bluerov_gyro_rates[1] = msg.twist.angular.y
+        self.bluerov_gyro_rates[2] = msg.twist.angular.z
 
     def bluerov_pose_callback(self, msg):
         self.bluerov_pose_estimate[0] = msg.pose.pose.position.x
@@ -144,7 +146,7 @@ class Data_Logger(Node):
                 'gps_y': 0,
                 'uuv_compass': self.bluerov_yaw_estimate,
                 'usv_compass': self.maddy_yaw_estimate,
-                'uuv_gyro': self.bluerov_yaw_rate,
+                'uuv_gyro': self.bluerov_gyro_rates[2],
                 'usv_gyro': self.maddy_yaw_rate,
                 'uuv_acc_x': self.bluerov_accel[0],
                 'uuv_acc_y': self.bluerov_accel[1],
