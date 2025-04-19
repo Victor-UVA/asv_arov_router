@@ -33,7 +33,8 @@ def generate_launch_description():
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('bluerov'), 'config', 'ost.yaml')}"},
-            {"gscam_config": "udpsrc port=5601 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"},
+            # {"gscam_config": "udpsrc port=5601 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
+            {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
             {"frame_id": "bluerov_camera"}
         ],
         remappings=[

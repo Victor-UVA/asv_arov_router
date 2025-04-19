@@ -28,7 +28,7 @@ class Data_Logger(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
-        self.LOG_FILE = f'{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv'
+        self.LOG_FILE = f'data_log/sensor_data/{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv'
         data_logging_period = 0.1
 
         # apriltag x and y are in the BlueROV's coordinate frame
