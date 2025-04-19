@@ -22,7 +22,7 @@ class BlueROV_Video_Recorder(Node):
         # self.size = (1920, 1080) # BlueROV video input
         self.frame_rate = 30
 
-        self.output_length = 10 # Length of each output file in seconds
+        self.output_length = 120 # Length of each output file in seconds
 
         self.start_file()
         self.start_timer = self.create_timer(self.output_length, self.start_file)

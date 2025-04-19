@@ -62,6 +62,12 @@ def generate_launch_description():
         # ]
     )
 
+    video_recorder_node = Node(
+        package="bluerov",
+        executable="bluerov_video_recorder",
+        name="video_recorder"
+    )
+
     # tf2 static transforms
     bluerov_camera_transform_node = Node(
         package="tf2_ros",
@@ -103,6 +109,7 @@ def generate_launch_description():
     ld.add_action(data_logger_node)
     ld.add_action(gscam2_node)
     ld.add_action(apriltag_node)
+    ld.add_action(video_recorder_node)
 
     # tf2 static transforms
     ld.add_action(bluerov_camera_transform_node)
