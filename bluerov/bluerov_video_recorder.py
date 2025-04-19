@@ -3,6 +3,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
+from bluerov_interfaces.srv import SetRecording
 
 class BlueROV_Video_Recorder(Node):
     def __init__(self):
@@ -14,7 +15,8 @@ class BlueROV_Video_Recorder(Node):
             10)
         self.br = CvBridge()
 
-        # self.cap = cv2.VideoCapture()
+        self.srv = self.create_service(SetRecording, 'set_recording', self.set_recording_callback)
+        self.recording = False
 
         self.size = (1920, 1080) # Webcam video input
         # self.size = (1920, 1080) # BlueROV video input
@@ -29,17 +31,32 @@ class BlueROV_Video_Recorder(Node):
     def listener_callback(self, data):
         self.current_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
         # self.current_frame = self.br.imgmsg_to_cv2(data)
-        # self.get_logger().info(f'Receiving video frame, {self.size}')
+        # self.get_logger().info(f'Receiving video frame, {self.current_frame.shape}')
 
     def write_video(self):
-        try:
-            self.video_writer.write(self.current_frame)
-        except AttributeError:
-            self.get_logger().warn('No images yet')
+        if self.recording:
+            try:
+                self.video_writer.write(self.current_frame)
+            except AttributeError:
+                self.get_logger().warn('No images being received')
 
     def start_file(self):
-        self.video_writer = cv2.VideoWriter(f"data_log/videos/bluerov_output_{self.get_clock().now().seconds_nanoseconds()[0]}.mp4",
-                                            cv2.VideoWriter_fourcc(*'mp4v'), self.frame_rate, self.size)
+        if self.recording:
+            video_name = f"data_log/videos/bluerov_output_{self.get_clock().now().seconds_nanoseconds()[0]}.mp4"
+            self.video_writer = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), self.frame_rate, self.size)
+            self.get_logger().info(f"Starting new recording: {video_name}")
+
+    def set_recording_callback(self, request, response):
+        self.recording = request.set_recording
+        response.recording_state = self.recording
+
+        if self.recording:
+            self.start_file()
+        else:
+            self.video_writer.release()
+            self.get_logger().info("Stoping recording")
+        
+        return response
 
 def main(args=None):
     rclpy.init(args=args)
