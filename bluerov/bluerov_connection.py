@@ -1,7 +1,6 @@
 from pymavlink import mavutil
 import rclpy
 from rclpy.node import Node
-import time
 from scipy.spatial.transform import Rotation
 
 from geometry_msgs.msg import AccelStamped, TwistStamped, TransformStamped
@@ -46,8 +45,8 @@ class BlueROV_Listener(Node):
 
 
         # Create timers to aquire and publish data
-        publish_timer_period = 0.1 # seconds
-        data_timer_period = 0.01
+        publish_timer_period = 0.02 # seconds
+        data_timer_period = 0.005
 
         self.accel_timer = self.create_timer(publish_timer_period, self.accel_publish)
         self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)

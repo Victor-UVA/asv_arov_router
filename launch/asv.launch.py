@@ -10,14 +10,14 @@ def generate_launch_description():
 
     bluerov_node = Node(
         package="bluerov",
-        executable="bluerov_data_collector",
-        name="bluerov_data_collector"
+        executable="bluerov_connection",
+        name="bluerov_connection"
     )
 
     maddy_node = Node(
         package="bluerov",
-        executable="maddy_data_collector",
-        name="maddy_data_collector"
+        executable="maddy_connection",
+        name="maddy_connection"
     )
 
     data_logger_node = Node(

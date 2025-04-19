@@ -1,11 +1,10 @@
 from pymavlink import mavutil
 import rclpy
 from rclpy.node import Node
-import time
 from scipy.spatial.transform import Rotation
 import numpy as np
 
-from geometry_msgs.msg import PoseStamped, TwistStamped, TransformStamped
+from geometry_msgs.msg import TwistStamped, TransformStamped
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu, NavSatFix
 from tf2_ros import TransformBroadcaster
@@ -49,8 +48,8 @@ class Maddy_Listener(Node):
 
 
         # Create timers to aquire and publish data
-        publish_timer_period = 0.1 # seconds
-        data_timer_period = 0.01
+        publish_timer_period = 0.02 # seconds
+        data_timer_period = 0.005
 
         self.yaw_rate_timer = self.create_timer(publish_timer_period, self.yaw_rate_publish)
         self.imu_timer = self.create_timer(data_timer_period, self.imu_publish)

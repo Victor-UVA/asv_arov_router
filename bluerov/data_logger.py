@@ -3,7 +3,7 @@ from rclpy.node import Node
 from scipy.spatial.transform import Rotation
 import csv
 
-from geometry_msgs.msg import AccelStamped, PoseStamped, TwistStamped
+from geometry_msgs.msg import AccelStamped, TwistStamped
 from nav_msgs.msg import Odometry
 from apriltag_msgs.msg import AprilTagDetectionArray
 
@@ -29,7 +29,7 @@ class Data_Logger(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
         self.LOG_FILE = f'data_log/sensor_data/{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv'
-        data_logging_period = 0.1
+        data_logging_period = 0.02
 
         # apriltag x and y are in the BlueROV's coordinate frame
         self.fields = ['timestep','uuv_x','uuv_y','uuv_z','uuv_psi','usv_x','usv_y','usv_psi','gps_x','gps_y','uuv_compass','usv_compass','uuv_gyro','usv_gyro', 'uuv_acc_x', 'uuv_acc_y', 'uuv_acc_z', 'apriltag_x', 'apriltag_y']
