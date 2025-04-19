@@ -94,3 +94,7 @@ The gscam2 node needs the camera calibration data from the BlueROV's camera so t
 - Launch the calibration node ```ros2 run camera_calibration cameracalibrator --size 7x9 --square 0.015 --ros-args -r image:=/image_raw```
 - [Link](https://medium.com/starschema-blog/offline-camera-calibration-in-ros-2-45e81df12555) to post with directions and additional info
 - [Other link](https://docs.nav2.org/tutorials/docs/camera_calibration.html) with more details
+
+
+# Saving the Video Stream from the BlueROV
+- gstreamer command to save video from webcam to an mp4:  ```gst-launch-1.0 -e v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert ! x264enc ! mp4mux ! filesink location=video.mp4```
