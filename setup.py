@@ -18,8 +18,8 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='malori',
-    maintainer_email='malori@todo.todo',
-    description='TODO: Package description',
+    maintainer_email='abo7fg@virginia.edu',
+    description='Package for running data collection, video recording and processing, and controls on the USV/BlueROV system in the VICTOR lab',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={

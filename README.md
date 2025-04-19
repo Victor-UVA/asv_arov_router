@@ -96,5 +96,5 @@ The gscam2 node needs the camera calibration data from the BlueROV's camera so t
 - [Other link](https://docs.nav2.org/tutorials/docs/camera_calibration.html) with more details
 
 
-# Saving the Video Stream from the BlueROV
+# Saving the Video Stream from the BlueROV Using gstreamer
 - gstreamer command to save video from webcam to an mp4:  ```gst-launch-1.0 -e v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert ! x264enc ! mp4mux ! filesink location=video.mp4```
