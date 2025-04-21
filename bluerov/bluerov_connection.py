@@ -31,6 +31,7 @@ class BlueROV_Connection(Node):
         self.gyro_rates = [0.0, 0.0, 0.0]
         self.pose_estimate = [0.0,0.0,0.0]
         self.orientation_estimate = [0.0,0.0,0.0]
+        self.vel_estimate = [0.0,0.0,0.0]
 
         # Define publishers for data from BlueROV to ROS
         self.acc_publisher_ = self.create_publisher(AccelStamped, 'bluerov/accel', 10)
@@ -49,6 +50,17 @@ class BlueROV_Connection(Node):
         self.data_timer = self.create_timer(data_timer_period, self.get_bluerov_data)
 
 
+
+
+
+
+
+
+
+
+
+
+    # Publishers
     def accel_publish(self):
         msg = AccelStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
@@ -81,12 +93,12 @@ class BlueROV_Connection(Node):
         msg.pose.pose.position.y = self.pose_estimate[1]
         msg.pose.pose.position.z = self.pose_estimate[2]
 
-        yaw = Rotation.from_euler('xyz', self.orientation_estimate, degrees=True).as_quat()
+        orientation = Rotation.from_euler('xyz', self.orientation_estimate, degrees=True).as_quat()
         
-        msg.pose.pose.orientation.w = yaw[3]
-        msg.pose.pose.orientation.x = yaw[0]
-        msg.pose.pose.orientation.y = yaw[1]
-        msg.pose.pose.orientation.z = yaw[2]
+        msg.pose.pose.orientation.w = orientation[3]
+        msg.pose.pose.orientation.x = orientation[0]
+        msg.pose.pose.orientation.y = orientation[1]
+        msg.pose.pose.orientation.z = orientation[2]
 
         self.pose_publisher_.publish(msg)
 
@@ -99,13 +111,23 @@ class BlueROV_Connection(Node):
         t.transform.translation.y = self.pose_estimate[1]
         t.transform.translation.z = self.pose_estimate[2]
 
-        t.transform.rotation.x = yaw[0]
-        t.transform.rotation.y = yaw[1]
-        t.transform.rotation.z = yaw[2]
-        t.transform.rotation.w = yaw[3]
+        t.transform.rotation.x = orientation[0]
+        t.transform.rotation.y = orientation[1]
+        t.transform.rotation.z = orientation[2]
+        t.transform.rotation.w = orientation[3]
 
         self.tf_broadcaster.sendTransform(t)
 
+
+
+
+
+
+
+
+
+
+    # Data collection from BlueROV
     def get_bluerov_data(self):
         if self.USING_HARDWARE:
             try:
@@ -127,6 +149,10 @@ class BlueROV_Connection(Node):
                     self.pose_estimate[0] = msg.to_dict()['x']
                     self.pose_estimate[1] = msg.to_dict()['y']
                     self.pose_estimate[2] = msg.to_dict()['z']
+
+                    self.vel_estimate[0] = msg.to_dict()['vx']
+                    self.vel_estimate[1] = msg.to_dict()['vy']
+                    self.vel_estimate[2] = msg.to_dict()['vz']
 
                 elif msg.get_type() == 'ATTITUDE':
                     self.orientation_estimate[0] = msg.to_dict()['roll']
@@ -154,3 +180,14 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+'''
+pymavlink control:
+Possible commands:
+- SET_ATTITUDE_TARGET
+- SET_POSITION_TARGET_LOCAL_NED
+
+
+
+'''
