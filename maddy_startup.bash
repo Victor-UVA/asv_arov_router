@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 # Run from home/maddy on the ASV computer
+# bash ros2_ws/src/bluerov/maddy_startup.bash
 echo "Today is " `date`
 cd ~/ros2_ws
 source install/setup.bash
