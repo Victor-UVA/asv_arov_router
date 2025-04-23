@@ -51,6 +51,50 @@ class BlueROV_Connection(Node):
 
 
 
+    def arm_disarm(self):
+        '''
+        Change the armed state of the vehicle (if it is armed, disarm it, if it is disarmed, arm it)
+        '''
+        if not self.armed:
+            self.master.arducopter_arm()
+        else:
+            self.master.arducopter_disarm()
+
+    def set_position_target_local_ned(self, param=[]):
+        '''
+        Implement MavLink command: SET_POSITION_TARGET_LOCAL_NED
+        
+        Args:
+            param (list, optional): param1, param2, ..., param11\\
+                1, 2, 3 are position\\
+                4, 5, 6 are velocity\\
+                7, 8, 9 are acceleration\\
+                10, 11 are yaw and yaw rate
+        '''
+
+        if len(param) != 11:
+            print('SET_POISITION_TARGET_GLOBAL_INT need 11 params')
+
+        # Set mask
+        mask = 0b0000000111111111
+        for i, value in enumerate(param):
+            if value is not None:
+                mask -= 1<<i
+            else:
+                param[i] = 0.0
+
+        self.conn.mav.set_position_target_local_ned_send(
+            0,                                              # system time in milliseconds
+            self.conn.target_system,                        # target system
+            self.conn.target_component,                     # target component
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,            # frame
+            mask,                                           # mask
+            param[0], param[1], param[2],                   # position x,y,z
+            param[3], param[4], param[5],                   # velocity x,y,z
+            param[6], param[7], param[8],                   # accel x,y,z
+            param[9], param[10])                            # yaw, yaw rate
+        pass
+
 
 
 
@@ -143,34 +187,44 @@ class BlueROV_Connection(Node):
     def parse_bluerov_data(self):
         
         msgs = self.get_bluerov_data()
+        
+        for msg_raw in msgs:
+            # self.get_logger().info(f'{msg.to_dict()}')
+            msg = msg_raw.to_dict()
+            msg_type = msg_raw.get_type()
 
-        for msg in msgs:
-            if msg == None or msg.get_type() == 'BAD_DATA':
+            if msg == None or msg_type == 'BAD_DATA':
                 pass
 
-            elif msg.get_type() == 'SCALED_IMU2':
-                self.accel[0] = 9.81 * float(msg.to_dict()['xacc']) / 1000.0
-                self.accel[1] = -9.81 * float(msg.to_dict()['yacc']) / 1000.0
-                self.accel[2] = -9.81 * float(msg.to_dict()['zacc']) / 1000.0
+            elif msg_type == 'HEARTBEAT':
+                base_mode = msg['base_mode']
+                is_autopilot = True if msg['autopilot'] != 8 else False
+                if is_autopilot:
+                    self.armed = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED)
+
+            elif msg_type == 'SCALED_IMU2':
+                self.accel[0] = 9.81 * float(msg['xacc']) / 1000.0
+                self.accel[1] = -9.81 * float(msg['yacc']) / 1000.0
+                self.accel[2] = -9.81 * float(msg['zacc']) / 1000.0
 
                 # TODO Verify orientation of gyro axes (originally had minus on z)
-                self.gyro_rates[0] = float(msg.to_dict()['xgyro']) / 1000.0
-                self.gyro_rates[1] = -float(msg.to_dict()['ygyro']) / 1000.0
-                self.gyro_rates[2] = -float(msg.to_dict()['zgyro']) / 1000.0
+                self.gyro_rates[0] = float(msg['xgyro']) / 1000.0
+                self.gyro_rates[1] = -float(msg['ygyro']) / 1000.0
+                self.gyro_rates[2] = -float(msg['zgyro']) / 1000.0
 
-            elif msg.get_type() == 'LOCAL_POSITION_NED':
-                self.pose_estimate[0] = msg.to_dict()['x']
-                self.pose_estimate[1] = msg.to_dict()['y']
-                self.pose_estimate[2] = msg.to_dict()['z']
+            elif msg_type == 'LOCAL_POSITION_NED':
+                self.pose_estimate[0] = msg['x']
+                self.pose_estimate[1] = msg['y']
+                self.pose_estimate[2] = msg['z']
 
-                self.vel_estimate[0] = msg.to_dict()['vx']
-                self.vel_estimate[1] = msg.to_dict()['vy']
-                self.vel_estimate[2] = msg.to_dict()['vz']
+                self.vel_estimate[0] = msg['vx']
+                self.vel_estimate[1] = msg['vy']
+                self.vel_estimate[2] = msg['vz']
 
-            elif msg.get_type() == 'ATTITUDE':
-                self.orientation_estimate[0] = msg.to_dict()['roll']
-                self.orientation_estimate[1] = msg.to_dict()['pitch']
-                self.orientation_estimate[2] = msg.to_dict()['yaw']
+            elif msg_type == 'ATTITUDE':
+                self.orientation_estimate[0] = msg['roll']
+                self.orientation_estimate[1] = msg['pitch']
+                self.orientation_estimate[2] = msg['yaw']
 
             else:
                 pass

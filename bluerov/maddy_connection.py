@@ -129,12 +129,15 @@ class Maddy_Connection(Node):
         
         msgs = self.get_maddy_data()
 
-        for msg in msgs:
-            if msg == None or msg.get_type() == 'BAD_DATA':
+        for msg_raw in msgs:
+            msg = msg_raw.to_dict()
+            msg_type = msg_raw.get_type()
+
+            if msg == None or msg_type == 'BAD_DATA':
                 pass
 
-            elif msg.get_type() == 'SCALED_IMU2':
-                self.yaw_rate = float(msg.to_dict()['zgyro']) / 1000.0
+            elif msg_type == 'SCALED_IMU2':
+                self.yaw_rate = float(msg['zgyro']) / 1000.0
 
                 self.imu.header.stamp = self.get_clock().now().to_msg()
                 self.imu.header.frame_id = '/maddy'
@@ -146,7 +149,7 @@ class Maddy_Connection(Node):
                 self.imu.orientation.z = self.imu_orientation[2]
                 self.imu.orientation.w = self.imu_orientation[3]
 
-                angular_vel_ned = np.array([msg.to_dict()['xgyro'], msg.to_dict()['ygyro'], msg.to_dict()['zgyro']], dtype=float) / 1000
+                angular_vel_ned = np.array([msg['xgyro'], msg['ygyro'], msg['zgyro']], dtype=float) / 1000
                 angular_vel_enu = self.ned_to_enu @ angular_vel_ned
 
                 self.imu.angular_velocity.x = angular_vel_enu[0]
@@ -155,7 +158,7 @@ class Maddy_Connection(Node):
 
                 # self.get_logger().info(f"{angular_vel_enu}")
 
-                linear_accel_ned = -9.81 * np.array([msg.to_dict()['xacc'], msg.to_dict()['yacc'], msg.to_dict()['zacc']], dtype=float) / 1000
+                linear_accel_ned = -9.81 * np.array([msg['xacc'], msg['yacc'], msg['zacc']], dtype=float) / 1000
                 linear_accel_enu = self.ned_to_enu @ linear_accel_ned
 
                 self.imu.linear_acceleration.x = linear_accel_enu[0]
@@ -164,18 +167,18 @@ class Maddy_Connection(Node):
 
                 # self.get_logger().info(f"{linear_accel_enu}")
 
-            elif msg.get_type() == 'GPS_RAW_INT':
+            elif msg_type == 'GPS_RAW_INT':
                 self.gps.header.stamp = self.get_clock().now().to_msg()
                 self.gps.header.frame_id = '/maddy'
 
 
-                if msg.to_dict()['fix_type'] == 1:
+                if msg['fix_type'] == 1:
                     status = -1
-                elif msg.to_dict()['fix_type'] == 2 or msg.to_dict()['fix_type'] == 3:
+                elif msg['fix_type'] == 2 or msg['fix_type'] == 3:
                     status = 0
-                elif msg.to_dict()['fix_type'] == 4:
+                elif msg['fix_type'] == 4:
                     status = 1
-                elif msg.to_dict()['fix_type'] == 5 or msg.to_dict()['fix_type'] == 6:
+                elif msg['fix_type'] == 5 or msg['fix_type'] == 6:
                     status = 2
                 else:
                     status = -1
@@ -183,19 +186,19 @@ class Maddy_Connection(Node):
                 self.gps.status.status = status
                 self.gps.status.service = 1
 
-                self.gps.latitude = msg.to_dict()['lat'] / (10**7)
-                self.gps.longitude = msg.to_dict()['lon'] / (10**7)
-                self.gps.altitude = msg.to_dict()['alt'] / 1000.0
+                self.gps.latitude = msg['lat'] / (10**7)
+                self.gps.longitude = msg['lon'] / (10**7)
+                self.gps.altitude = msg['alt'] / 1000.0
 
-            elif msg.get_type() == 'LOCAL_POSITION_NED':
-                self.pose_estimate[0] = msg.to_dict()['x']
-                self.pose_estimate[1] = msg.to_dict()['y']
-                self.pose_estimate[2] = msg.to_dict()['z']
+            elif msg_type == 'LOCAL_POSITION_NED':
+                self.pose_estimate[0] = msg['x']
+                self.pose_estimate[1] = msg['y']
+                self.pose_estimate[2] = msg['z']
 
-                # self.get_logger().info(f"{msg.to_dict()['x']}, {msg.to_dict()['y']}, {msg.to_dict()['z']}, {self.yaw_estimate}")
+                # self.get_logger().info(f"{msg['x']}, {msg['y']}, {msg['z']}, {self.yaw_estimate}")
 
-            elif msg.get_type() == 'ATTITUDE':
-                self.yaw_estimate = msg.to_dict()['yaw']
+            elif msg_type == 'ATTITUDE':
+                self.yaw_estimate = msg['yaw']
 
             else:
                 pass
