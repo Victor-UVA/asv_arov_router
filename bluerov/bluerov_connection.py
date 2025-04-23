@@ -73,7 +73,7 @@ class BlueROV_Connection(Node):
         '''
 
         if len(param) != 11:
-            print('SET_POISITION_TARGET_GLOBAL_INT need 11 params')
+            print('SET_POSITION_TARGET_LOCAL_NED need 11 params')
 
         # Set mask
         mask = 0b0000000111111111
