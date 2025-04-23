@@ -82,11 +82,11 @@ class BlueROV_Connection(Node):
                 mask -= 1<<i
             else:
                 param[i] = 0.0
-
-        self.conn.mav.set_position_target_local_ned_send(
+        
+        self.master.mav.set_position_target_local_ned_send(
             0,                                              # system time in milliseconds
-            self.conn.target_system,                        # target system
-            self.conn.target_component,                     # target component
+            self.master.target_system,                      # target system
+            self.master.target_component,                   # target component
             mavutil.mavlink.MAV_FRAME_LOCAL_NED,            # frame
             mask,                                           # mask
             param[0], param[1], param[2],                   # position x,y,z

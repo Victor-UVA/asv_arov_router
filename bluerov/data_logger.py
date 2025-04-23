@@ -2,6 +2,8 @@ import rclpy
 from rclpy.node import Node
 from scipy.spatial.transform import Rotation
 import csv
+import json
+import os
 
 from geometry_msgs.msg import AccelStamped, TwistStamped
 from nav_msgs.msg import Odometry
@@ -28,7 +30,7 @@ class Data_Logger(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
-        self.LOG_FILE = f'data_log/sensor_data/{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv'
+        self.LOG_FILE = os.path.join('data_log', 'sensor_data', f'{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv')
         data_logging_period = 0.02
 
         # apriltag x and y are in the BlueROV's coordinate frame
@@ -157,6 +159,14 @@ class Data_Logger(Node):
             
             csv_writer.writerow(info)
             self.apriltag_pose = [0.0, 0.0]
+
+        json_info = {
+            'time': 10,
+            'apriltags': [{'id1': 1}, {'id2': 2}]
+        }
+
+        with open(os.path.join('data_log', 'sensor_data', f'{self.get_clock().now().seconds_nanoseconds()[0]}_test_output.json'), 'a') as json_file:
+            pass
 
 
 def main(args=None):
