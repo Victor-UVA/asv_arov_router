@@ -14,17 +14,14 @@ class BlueROV_Connection(Node):
     '''
     def __init__(self):
         super().__init__('bluerov_connection')
-        self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
-    
         self.get_logger().info('Hi from BlueROV node!')
         
-        if self.USING_HARDWARE:
-            # self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14551')
-            self.master = mavutil.mavlink_connection('udpin:localhost:14551')
-            self.master.wait_heartbeat()
+        # self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14551')
+        self.master = mavutil.mavlink_connection('udpin:localhost:14551')
+        self.master.wait_heartbeat()
 
-            self.get_logger().info("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
-            self.get_logger().info('BlueROV connected!')
+        self.get_logger().info("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
+        self.get_logger().info('BlueROV connected!')
 
         # Define variables to store the data from the BlueROV between publishing it
         self.accel = [0.0,0.0,0.0]
@@ -47,7 +44,7 @@ class BlueROV_Connection(Node):
         self.accel_timer = self.create_timer(publish_timer_period, self.accel_publish)
         self.gyro_rates_timer = self.create_timer(publish_timer_period, self.gyro_rates_publish)
         self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
-        self.data_timer = self.create_timer(data_timer_period, self.get_bluerov_data)
+        self.data_timer = self.create_timer(data_timer_period, self.parse_bluerov_data)
 
 
 
@@ -129,43 +126,54 @@ class BlueROV_Connection(Node):
 
     # Data collection from BlueROV
     def get_bluerov_data(self):
-        if self.USING_HARDWARE:
+        msgs = []
+
+        while True:
             try:
-                msg = self.master.recv_match(blocking=True)
-                if msg == None or msg.get_type() == 'BAD_DATA':
-                    pass
-
-                elif msg.get_type() == 'SCALED_IMU2':
-                    self.accel[0] = 9.81 * float(msg.to_dict()['xacc']) / 1000.0
-                    self.accel[1] = -9.81 * float(msg.to_dict()['yacc']) / 1000.0
-                    self.accel[2] = -9.81 * float(msg.to_dict()['zacc']) / 1000.0
-
-                    # TODO Verify orientation of gyro axes (originally had minus on z)
-                    self.gyro_rates[0] = float(msg.to_dict()['xgyro']) / 1000.0
-                    self.gyro_rates[1] = -float(msg.to_dict()['ygyro']) / 1000.0
-                    self.gyro_rates[2] = -float(msg.to_dict()['zgyro']) / 1000.0
-
-                elif msg.get_type() == 'LOCAL_POSITION_NED':
-                    self.pose_estimate[0] = msg.to_dict()['x']
-                    self.pose_estimate[1] = msg.to_dict()['y']
-                    self.pose_estimate[2] = msg.to_dict()['z']
-
-                    self.vel_estimate[0] = msg.to_dict()['vx']
-                    self.vel_estimate[1] = msg.to_dict()['vy']
-                    self.vel_estimate[2] = msg.to_dict()['vz']
-
-                elif msg.get_type() == 'ATTITUDE':
-                    self.orientation_estimate[0] = msg.to_dict()['roll']
-                    self.orientation_estimate[1] = msg.to_dict()['pitch']
-                    self.orientation_estimate[2] = msg.to_dict()['yaw']
-
+                msg = self.master.recv_match()
+                if msg != None:
+                    msgs.append(msg)
                 else:
-                    pass
-
+                    break
             except:
+                break
+
+        return msgs
+    
+    def parse_bluerov_data(self):
+        
+        msgs = self.get_bluerov_data()
+
+        for msg in msgs:
+            if msg == None or msg.get_type() == 'BAD_DATA':
                 pass
-        else:
-            pass
+
+            elif msg.get_type() == 'SCALED_IMU2':
+                self.accel[0] = 9.81 * float(msg.to_dict()['xacc']) / 1000.0
+                self.accel[1] = -9.81 * float(msg.to_dict()['yacc']) / 1000.0
+                self.accel[2] = -9.81 * float(msg.to_dict()['zacc']) / 1000.0
+
+                # TODO Verify orientation of gyro axes (originally had minus on z)
+                self.gyro_rates[0] = float(msg.to_dict()['xgyro']) / 1000.0
+                self.gyro_rates[1] = -float(msg.to_dict()['ygyro']) / 1000.0
+                self.gyro_rates[2] = -float(msg.to_dict()['zgyro']) / 1000.0
+
+            elif msg.get_type() == 'LOCAL_POSITION_NED':
+                self.pose_estimate[0] = msg.to_dict()['x']
+                self.pose_estimate[1] = msg.to_dict()['y']
+                self.pose_estimate[2] = msg.to_dict()['z']
+
+                self.vel_estimate[0] = msg.to_dict()['vx']
+                self.vel_estimate[1] = msg.to_dict()['vy']
+                self.vel_estimate[2] = msg.to_dict()['vz']
+
+            elif msg.get_type() == 'ATTITUDE':
+                self.orientation_estimate[0] = msg.to_dict()['roll']
+                self.orientation_estimate[1] = msg.to_dict()['pitch']
+                self.orientation_estimate[2] = msg.to_dict()['yaw']
+
+            else:
+                pass
 
 
 def main():

@@ -15,17 +15,15 @@ class Maddy_Connection(Node):
     '''
     def __init__(self):
         super().__init__('maddy_connection')
-        self.USING_HARDWARE = True # Toggle for testing when connected to hardware or not
     
         self.get_logger().info('Hi from Maddy node!')
-        
-        if self.USING_HARDWARE:
-            # self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14552')
-            self.master = mavutil.mavlink_connection('udpin:localhost:14553')
-            self.master.wait_heartbeat()
 
-            self.get_logger().info("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
-            self.get_logger().info('Maddy connected!')
+        # self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14552')
+        self.master = mavutil.mavlink_connection('udpin:localhost:14553')
+        self.master.wait_heartbeat()
+
+        self.get_logger().info("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
+        self.get_logger().info('Maddy connected!')
 
         # Define variables to store the data from the BlueROV between publishing it
         self.yaw_rate = 0.0
@@ -51,7 +49,7 @@ class Maddy_Connection(Node):
         self.imu_timer = self.create_timer(data_timer_period, self.imu_publish)
         self.gps_timer = self.create_timer(data_timer_period, self.gps_publish)
         self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
-        self.data_timer = self.create_timer(data_timer_period, self.get_maddy_data)
+        self.data_timer = self.create_timer(data_timer_period, self.parse_maddy_data)
 
     def yaw_rate_publish(self):
         msg = TwistStamped()
@@ -105,84 +103,102 @@ class Maddy_Connection(Node):
 
         self.tf_broadcaster.sendTransform(t)
 
+
+
+
+
+
+
+
     def get_maddy_data(self):
-        if self.USING_HARDWARE:
+        msgs = []
+
+        while True:
             try:
-                msg = self.master.recv_match(blocking=True)
-                if msg == None or msg.get_type() == 'BAD_DATA':
-                    pass
-
-                elif msg.get_type() == 'SCALED_IMU2':
-                    self.yaw_rate = float(msg.to_dict()['zgyro']) / 1000.0
-
-                    self.imu.header.stamp = self.get_clock().now().to_msg()
-                    self.imu.header.frame_id = '/maddy'
-
-                    self.imu_orientation = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate -90], degrees=True).as_quat()
-
-                    self.imu.orientation.x = self.imu_orientation[0]
-                    self.imu.orientation.y = self.imu_orientation[1]
-                    self.imu.orientation.z = self.imu_orientation[2]
-                    self.imu.orientation.w = self.imu_orientation[3]
-
-                    angular_vel_ned = np.array([msg.to_dict()['xgyro'], msg.to_dict()['ygyro'], msg.to_dict()['zgyro']], dtype=float) / 1000
-                    angular_vel_enu = self.ned_to_enu @ angular_vel_ned
-
-                    self.imu.angular_velocity.x = angular_vel_enu[0]
-                    self.imu.angular_velocity.y = angular_vel_enu[1]
-                    self.imu.angular_velocity.z = angular_vel_enu[2]
-
-                    # self.get_logger().info(f"{angular_vel_enu}")
-
-                    linear_accel_ned = -9.81 * np.array([msg.to_dict()['xacc'], msg.to_dict()['yacc'], msg.to_dict()['zacc']], dtype=float) / 1000
-                    linear_accel_enu = self.ned_to_enu @ linear_accel_ned
-
-                    self.imu.linear_acceleration.x = linear_accel_enu[0]
-                    self.imu.linear_acceleration.y = linear_accel_enu[1]
-                    self.imu.linear_acceleration.z = linear_accel_enu[2]
-
-                    # self.get_logger().info(f"{linear_accel_enu}")
-
-                elif msg.get_type() == 'GPS_RAW_INT':
-                    self.gps.header.stamp = self.get_clock().now().to_msg()
-                    self.gps.header.frame_id = '/maddy'
-
-
-                    if msg.to_dict()['fix_type'] == 1:
-                        status = -1
-                    elif msg.to_dict()['fix_type'] == 2 or msg.to_dict()['fix_type'] == 3:
-                        status = 0
-                    elif msg.to_dict()['fix_type'] == 4:
-                        status = 1
-                    elif msg.to_dict()['fix_type'] == 5 or msg.to_dict()['fix_type'] == 6:
-                        status = 2
-                    else:
-                        status = -1
-
-                    self.gps.status.status = status
-                    self.gps.status.service = 1
-
-                    self.gps.latitude = msg.to_dict()['lat'] / (10**7)
-                    self.gps.longitude = msg.to_dict()['lon'] / (10**7)
-                    self.gps.altitude = msg.to_dict()['alt'] / 1000.0
-
-                elif msg.get_type() == 'LOCAL_POSITION_NED':
-                    self.pose_estimate[0] = msg.to_dict()['x']
-                    self.pose_estimate[1] = msg.to_dict()['y']
-                    self.pose_estimate[2] = msg.to_dict()['z']
-
-                    # self.get_logger().info(f"{msg.to_dict()['x']}, {msg.to_dict()['y']}, {msg.to_dict()['z']}, {self.yaw_estimate}")
-
-                elif msg.get_type() == 'ATTITUDE':
-                    self.yaw_estimate = msg.to_dict()['yaw']
-
+                msg = self.master.recv_match()
+                if msg != None:
+                    msgs.append(msg)
                 else:
-                    pass
-
+                    break
             except:
+                break
+
+        return msgs
+
+    def parse_maddy_data(self):
+        
+        msgs = self.get_maddy_data()
+
+        for msg in msgs:
+            if msg == None or msg.get_type() == 'BAD_DATA':
                 pass
-        else:
-            pass
+
+            elif msg.get_type() == 'SCALED_IMU2':
+                self.yaw_rate = float(msg.to_dict()['zgyro']) / 1000.0
+
+                self.imu.header.stamp = self.get_clock().now().to_msg()
+                self.imu.header.frame_id = '/maddy'
+
+                self.imu_orientation = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate -90], degrees=True).as_quat()
+
+                self.imu.orientation.x = self.imu_orientation[0]
+                self.imu.orientation.y = self.imu_orientation[1]
+                self.imu.orientation.z = self.imu_orientation[2]
+                self.imu.orientation.w = self.imu_orientation[3]
+
+                angular_vel_ned = np.array([msg.to_dict()['xgyro'], msg.to_dict()['ygyro'], msg.to_dict()['zgyro']], dtype=float) / 1000
+                angular_vel_enu = self.ned_to_enu @ angular_vel_ned
+
+                self.imu.angular_velocity.x = angular_vel_enu[0]
+                self.imu.angular_velocity.y = angular_vel_enu[1]
+                self.imu.angular_velocity.z = angular_vel_enu[2]
+
+                # self.get_logger().info(f"{angular_vel_enu}")
+
+                linear_accel_ned = -9.81 * np.array([msg.to_dict()['xacc'], msg.to_dict()['yacc'], msg.to_dict()['zacc']], dtype=float) / 1000
+                linear_accel_enu = self.ned_to_enu @ linear_accel_ned
+
+                self.imu.linear_acceleration.x = linear_accel_enu[0]
+                self.imu.linear_acceleration.y = linear_accel_enu[1]
+                self.imu.linear_acceleration.z = linear_accel_enu[2]
+
+                # self.get_logger().info(f"{linear_accel_enu}")
+
+            elif msg.get_type() == 'GPS_RAW_INT':
+                self.gps.header.stamp = self.get_clock().now().to_msg()
+                self.gps.header.frame_id = '/maddy'
+
+
+                if msg.to_dict()['fix_type'] == 1:
+                    status = -1
+                elif msg.to_dict()['fix_type'] == 2 or msg.to_dict()['fix_type'] == 3:
+                    status = 0
+                elif msg.to_dict()['fix_type'] == 4:
+                    status = 1
+                elif msg.to_dict()['fix_type'] == 5 or msg.to_dict()['fix_type'] == 6:
+                    status = 2
+                else:
+                    status = -1
+
+                self.gps.status.status = status
+                self.gps.status.service = 1
+
+                self.gps.latitude = msg.to_dict()['lat'] / (10**7)
+                self.gps.longitude = msg.to_dict()['lon'] / (10**7)
+                self.gps.altitude = msg.to_dict()['alt'] / 1000.0
+
+            elif msg.get_type() == 'LOCAL_POSITION_NED':
+                self.pose_estimate[0] = msg.to_dict()['x']
+                self.pose_estimate[1] = msg.to_dict()['y']
+                self.pose_estimate[2] = msg.to_dict()['z']
+
+                # self.get_logger().info(f"{msg.to_dict()['x']}, {msg.to_dict()['y']}, {msg.to_dict()['z']}, {self.yaw_estimate}")
+
+            elif msg.get_type() == 'ATTITUDE':
+                self.yaw_estimate = msg.to_dict()['yaw']
+
+            else:
+                pass
 
 
 def main():
