@@ -161,12 +161,41 @@ class Data_Logger(Node):
             self.apriltag_pose = [0.0, 0.0]
 
         json_info = {
-            'time': 10,
-            'apriltags': [{'id1': 1}, {'id2': 2}]
+            'timestep': str(self.get_clock().now().seconds_nanoseconds()[0]) + '.' + str(self.get_clock().now().seconds_nanoseconds()[1]),
+            'uuv_x': self.bluerov_pose_estimate[0],
+            'uuv_y': self.bluerov_pose_estimate[1],
+            'uuv_z': self.bluerov_pose_estimate[2],
+            'uuv_psi': self.bluerov_yaw_estimate,
+            'usv_x': self.maddy_pose_estimate[0],
+            'usv_y': self.maddy_pose_estimate[1],
+            'usv_psi': self.maddy_yaw_estimate,
+            'gps_x': 0,
+            'gps_y': 0,
+            'uuv_compass': self.bluerov_yaw_estimate,
+            'usv_compass': self.maddy_yaw_estimate,
+            'uuv_gyro': self.bluerov_gyro_rates[2],
+            'usv_gyro': self.maddy_yaw_rate,
+            'uuv_acc_x': self.bluerov_accel[0],
+            'uuv_acc_y': self.bluerov_accel[1],
+            'uuv_acc_z': self.bluerov_accel[2],
+            'apriltags': [
+                {
+                    'id': 1,
+                    'x': self.apriltag_pose[0],
+                    'y': self.apriltag_pose[1]
+                }
+            ]
         }
 
-        with open(os.path.join('data_log', 'sensor_data', f'{self.get_clock().now().seconds_nanoseconds()[0]}_test_output.json'), 'a') as json_file:
-            pass
+        # To read for processing
+        # data = []
+        # with open('test_output.json', 'r') as json_file:
+        #     for line in json_file:
+        #       data.append(json.loads(line))
+
+        with open(os.path.join('data_log', 'sensor_data', f'{self.get_clock().now().seconds_nanoseconds()[0]}_data.json'), 'a') as json_file:
+            json.dump(json_info, json_file)
+            json_file.write('\n')
 
 
 def main(args=None):
