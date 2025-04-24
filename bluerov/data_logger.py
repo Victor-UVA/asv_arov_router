@@ -183,6 +183,11 @@ class Data_Logger(Node):
                     'id': 1,
                     'x': self.apriltag_pose[0],
                     'y': self.apriltag_pose[1]
+                },
+                {
+                    'id': 2,
+                    'x': self.apriltag_pose[0],
+                    'y': self.apriltag_pose[1]
                 }
             ]
         }
