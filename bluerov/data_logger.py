@@ -31,6 +31,7 @@ class Data_Logger(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
         self.LOG_FILE = os.path.join('data_log', 'sensor_data', f'{self.get_clock().now().seconds_nanoseconds()[0]}_data.csv')
+        self.JSON_LOG_FILE = os.path.join('data_log', 'sensor_data', f'{self.get_clock().now().seconds_nanoseconds()[0]}_data.json')
         data_logging_period = 0.02
 
         # apriltag x and y are in the BlueROV's coordinate frame
@@ -198,7 +199,7 @@ class Data_Logger(Node):
         #     for line in json_file:
         #       data.append(json.loads(line))
 
-        with open(os.path.join('data_log', 'sensor_data', f'{self.get_clock().now().seconds_nanoseconds()[0]}_data.json'), 'a') as json_file:
+        with open(self.JSON_LOG_FILE, 'a') as json_file:
             json.dump(json_info, json_file)
             json_file.write('\n')
 
