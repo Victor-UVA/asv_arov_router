@@ -36,7 +36,8 @@ class BlueROV_Connection(Node):
 
 
         # Define subscriptions to other ROS topics
-        self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback)
+        self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
+        self.cmd_vel_sub
 
 
         # Define variables to store the data from the BlueROV between publishing it
@@ -112,7 +113,7 @@ class BlueROV_Connection(Node):
         '''
 
         if len(param) != 11:
-            print('SET_POSITION_TARGET_LOCAL_NED need 11 params')
+            self.get_logger().info('SET_POSITION_TARGET_LOCAL_NED need 11 params')
 
         # Set mask
         mask = 0b0000000111111111
@@ -144,7 +145,7 @@ class BlueROV_Connection(Node):
             8 is thrust
         """
         if len(param) != 8:
-            print('SET_ATTITUDE_TARGET need 8 params')
+            self.get_logger().info('SET_ATTITUDE_TARGET need 8 params')
 
         # Set mask
         mask = 0b11111111
@@ -209,16 +210,17 @@ class BlueROV_Connection(Node):
         Args:
             msg (Twist): Velocity command to convert to PWM
         '''
-        vel_x, vel_y = msg.linear.x, msg.linear.y
+        vel_x, vel_y, vel_z = msg.linear.x, msg.linear.y, msg.linear.z
         omega_z = msg.angular.z
 
         vel_x = max(-self.MAX_VEL, min(self.MAX_VEL, vel_x))
         vel_y = max(-self.MAX_VEL, min(self.MAX_VEL, vel_y))
+        vel_z = max(-self.MAX_VEL, min(self.MAX_VEL, vel_z))
         omega_z = max(-self.MAX_OMEGA, min(self.MAX_OMEGA, omega_z))
 
         x = 1500 + int(self.VEL_TO_CMD * vel_x)
         y = 1500 + int(self.VEL_TO_CMD * vel_y)
-        z = 65535
+        z = 1500 + int(self.VEL_TO_CMD * vel_z)
         yaw = 1500 + int(self.OMEGA_TO_CMD * omega_z)
 
         return x, y, z, yaw
@@ -231,7 +233,7 @@ class BlueROV_Connection(Node):
             msg (Twist): Velocity command to convert to PWM
         '''
         if self.cmd_vel_enabled:
-            self.set_cmd_pwm(self.cmd_vel_to_pwm(msg))
+            self.set_cmd_pwm(*self.cmd_vel_to_pwm(msg))
         else:
             return
 
