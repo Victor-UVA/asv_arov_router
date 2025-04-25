@@ -159,7 +159,6 @@ class Data_Logger(Node):
             }
             
             csv_writer.writerow(info)
-            self.apriltag_pose = [0.0, 0.0]
 
         json_info = {
             'timestep': str(self.get_clock().now().seconds_nanoseconds()[0]) + '.' + str(self.get_clock().now().seconds_nanoseconds()[1]),
@@ -170,8 +169,6 @@ class Data_Logger(Node):
             'usv_x': self.maddy_pose_estimate[0],
             'usv_y': self.maddy_pose_estimate[1],
             'usv_psi': self.maddy_yaw_estimate,
-            'gps_x': 0,
-            'gps_y': 0,
             'uuv_compass': self.bluerov_yaw_estimate,
             'usv_compass': self.maddy_yaw_estimate,
             'uuv_gyro': self.bluerov_gyro_rates[2],
@@ -192,6 +189,8 @@ class Data_Logger(Node):
                 }
             ]
         }
+
+        self.apriltag_pose = [0.0, 0.0]
 
         # To read for processing
         # data = []
