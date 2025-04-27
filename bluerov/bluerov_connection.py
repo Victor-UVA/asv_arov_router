@@ -245,7 +245,7 @@ class BlueROV_Connection(Node):
 
 
     # Services
-    def position_target_local_ned_callback(self, request, response):
+    def position_target_local_ned_callback(self, request: PositionTargetLocalNED.Request, response: PositionTargetLocalNED.Response):
         try:
             self.set_position_target_local_ned([request.x, request.y, request.z, request.vx, request.vy, request.vz,
                                                 request.ax, request.ay, request.az, request.yaw, request.yaw_rate])
