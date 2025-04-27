@@ -7,6 +7,8 @@ from geometry_msgs.msg import AccelStamped, TwistStamped, TransformStamped, Twis
 from nav_msgs.msg import Odometry
 from tf2_ros import TransformBroadcaster
 
+from bluerov_interfaces.srv import PositionTargetLocalNED
+
 
 class BlueROV_Connection(Node):
     '''
@@ -38,6 +40,10 @@ class BlueROV_Connection(Node):
         # Define subscriptions to other ROS topics
         self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
         self.cmd_vel_sub
+
+        # Define service servers
+        self.set_position_target_local_ned_srv = self.create_service(PositionTargetLocalNED, 'set_position_target_local_ned',
+                                                                     self.position_target_local_ned_callback)
 
 
         # Define variables to store the data from the BlueROV between publishing it
@@ -238,6 +244,18 @@ class BlueROV_Connection(Node):
             return
 
 
+
+    # Services
+    def position_target_local_ned_callback(self, request, response):
+        try:
+            self.set_position_target_local_ned([request.x, request.y, request.z, request.vx, request.vy, request.vz,
+                                                request.ax, request.ay, request.az, request.yaw, request.yaw_rate])
+            
+            response.position_target_set = True
+        except:
+            response.position_target_set = False
+
+        return response
 
 
     # Publishers
