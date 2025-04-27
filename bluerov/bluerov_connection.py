@@ -9,7 +9,6 @@ from tf2_ros import TransformBroadcaster
 
 from bluerov_interfaces.srv import PositionTargetLocalNED
 
-
 class BlueROV_Connection(Node):
     '''
     Node to connect to the BlueROV2 over mavlink to translate data from it into ROS topics and allow for autonomous control.
@@ -254,7 +253,6 @@ class BlueROV_Connection(Node):
             response.position_target_set = True
         except:
             response.position_target_set = False
-
         return response
 
 
