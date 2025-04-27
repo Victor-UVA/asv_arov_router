@@ -5,7 +5,7 @@ import csv
 import json
 import os
 
-from geometry_msgs.msg import AccelStamped, TwistStamped
+from geometry_msgs.msg import AccelStamped, TwistStamped, Twist
 from nav_msgs.msg import Odometry
 from apriltag_msgs.msg import AprilTagDetectionArray
 
@@ -21,12 +21,14 @@ class Data_Logger(Node):
         self.bluerov_gyro_rates = [0.0,0.0,0.0]
         self.bluerov_pose_estimate = [0.0,0.0,0.0]
         self.bluerov_yaw_estimate = 0.0
+        self.bluerov_control = Twist()
 
         self.maddy_yaw_rate = 0.0
         self.maddy_pose_estimate = [0.0,0.0,0.0]
         self.maddy_yaw_estimate = 0.0
 
         self.apriltag_pose = [0.0, 0.0]
+        self.apriltags = []
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
@@ -35,7 +37,8 @@ class Data_Logger(Node):
         data_logging_period = 0.02
 
         # apriltag x and y are in the BlueROV's coordinate frame
-        self.fields = ['timestep','uuv_x','uuv_y','uuv_z','uuv_psi','usv_x','usv_y','usv_psi','gps_x','gps_y','uuv_compass','usv_compass','uuv_gyro','usv_gyro', 'uuv_acc_x', 'uuv_acc_y', 'uuv_acc_z', 'apriltag_x', 'apriltag_y']
+        self.fields = ['timestep','uuv_x','uuv_y','uuv_z','uuv_psi','usv_x','usv_y','usv_psi','gps_x','gps_y','uuv_compass','usv_compass',
+                       'uuv_gyro','usv_gyro', 'uuv_acc_x', 'uuv_acc_y', 'uuv_acc_z', 'apriltag_x', 'apriltag_y', 'uuv_u_x', 'uuv_u_y', 'uuv_u_z', 'uuv_u_yaw']
         with open(self.LOG_FILE, 'w') as csv_file:
             csv_writer =csv.DictWriter(csv_file, fieldnames=self.fields)
             csv_writer.writeheader()
@@ -69,6 +72,12 @@ class Data_Logger(Node):
             10)
         self.bluerov_apriltag_detect_sub  # prevent unused variable warning
 
+        self.bluerov_cmd_vel_sub = self.create_subscription(
+            Twist,
+            '/cmd_vel',
+            self.bluerov_cmd_vel_callback,
+            10)
+        self.bluerov_apriltag_detect_sub  # prevent unused variable warning
 
         # USV subscriptions
         self.maddy_yaw_rate_sub = self.create_subscription(
@@ -105,7 +114,7 @@ class Data_Logger(Node):
         rot = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
         self.bluerov_yaw_estimate = Rotation.from_quat(rot).as_euler('xyz', degrees=True)[2]
 
-    def bluerov_apriltag_detect_callback(self, msg):
+    def bluerov_apriltag_detect_callback(self, msg: AprilTagDetectionArray):
         if msg.detections:
             from_frame = f'{msg.detections[0].family}:{msg.detections[0].id}'
             to_frame = 'bluerov'
@@ -114,12 +123,40 @@ class Data_Logger(Node):
                     to_frame,
                     from_frame,
                     rclpy.time.Time())
+                
+                self.apriltag_pose = [t.transform.translation.x, t.transform.translation.y]
             except TransformException as ex:
                 self.get_logger().info(
                     f'Could not transform {to_frame} to {from_frame}: {ex}')
                 return
             
-            self.apriltag_pose = [t.transform.translation.x, t.transform.translation.y]
+
+            for tag in msg.detections:
+                from_frame = f'{tag.family}:{tag.id}'
+                to_frame = 'bluerov'
+                try:
+                    t = self.tf_buffer.lookup_transform(
+                        to_frame,
+                        from_frame,
+                        rclpy.time.Time())
+
+                    tag_already_detected = False
+                    for tags in self.apriltags:
+                        if tags['id'] == from_frame:
+                            tags['x'] = t.transform.translation.x
+                            tags['y'] = t.transform.translation.y
+                            tag_already_detected = True
+
+                    if not tag_already_detected:
+                        self.apriltags.append({'id': from_frame, 'x': t.transform.translation.x, 'y': t.transform.translation.y})
+
+                except TransformException as ex:
+                    self.get_logger().info(
+                        f'Could not transform {to_frame} to {from_frame}: {ex}')
+                    return
+
+    def bluerov_cmd_vel_callback(self, msg):
+        self.bluerov_control = msg
 
 
     def maddy_yaw_rate_callback(self, msg):
@@ -155,7 +192,11 @@ class Data_Logger(Node):
                 'uuv_acc_y': self.bluerov_accel[1],
                 'uuv_acc_z': self.bluerov_accel[2],
                 'apriltag_x': self.apriltag_pose[0],
-                'apriltag_y': self.apriltag_pose[1]
+                'apriltag_y': self.apriltag_pose[1],
+                'uuv_u_x': self.bluerov_control.linear.x,
+                'uuv_u_y': self.bluerov_control.linear.y,
+                'uuv_u_z': self.bluerov_control.linear.z,
+                'uuv_u_yaw': self.bluerov_control.angular.z
             }
             
             csv_writer.writerow(info)
@@ -176,21 +217,15 @@ class Data_Logger(Node):
             'uuv_acc_x': self.bluerov_accel[0],
             'uuv_acc_y': self.bluerov_accel[1],
             'uuv_acc_z': self.bluerov_accel[2],
-            'apriltags': [
-                {
-                    'id': 1,
-                    'x': self.apriltag_pose[0],
-                    'y': self.apriltag_pose[1]
-                },
-                {
-                    'id': 2,
-                    'x': self.apriltag_pose[0],
-                    'y': self.apriltag_pose[1]
-                }
-            ]
+            'uuv_u_x': self.bluerov_control.linear.x,
+            'uuv_u_y': self.bluerov_control.linear.y,
+            'uuv_u_z': self.bluerov_control.linear.z,
+            'uuv_u_yaw': self.bluerov_control.angular.z,
+            'apriltags': self.apriltags
         }
 
         self.apriltag_pose = [0.0, 0.0]
+        self.apriltags = []
 
         # To read for processing
         # data = []
