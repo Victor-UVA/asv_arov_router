@@ -7,7 +7,7 @@ from geometry_msgs.msg import AccelStamped, TwistStamped, TransformStamped, Twis
 from nav_msgs.msg import Odometry
 from tf2_ros import TransformBroadcaster
 
-from bluerov_interfaces.srv import PositionTargetLocalNED
+from bluerov_interfaces.srv import PositionTargetLocalNED, SetMAVMode, SetArmDisarm
 
 class BlueROV_Connection(Node):
     '''
@@ -43,6 +43,8 @@ class BlueROV_Connection(Node):
         # Define service servers
         self.set_position_target_local_ned_srv = self.create_service(PositionTargetLocalNED, 'set_position_target_local_ned',
                                                                      self.position_target_local_ned_callback)
+        self.set_mode_srv = self.create_service(SetMAVMode, 'set_mav_mode', self.set_mode_callback)
+        self.set_arm_disarm_srv = self.create_service(SetArmDisarm, 'set_arm_disarm', self.set_arm_disarm_callback)
 
 
         # Define variables to store the data from the BlueROV between publishing it
@@ -92,7 +94,7 @@ class BlueROV_Connection(Node):
         else:
             self.master.arducopter_disarm()
 
-    def set_mode(self, mode):
+    def set_mode(self, mode: str):
         """
         Set ROV mode
         http://ardupilot.org/copter/docs/flight-modes.html
@@ -127,7 +129,8 @@ class BlueROV_Connection(Node):
                 mask -= 1<<i
             else:
                 param[i] = 0.0
-        
+
+        # self.get_logger().info(f'Sending position target: X: {param[0]}, Y: {param[1]}, Z: {param[2]}, Yaw: {param[9]}')
         self.master.mav.set_position_target_local_ned_send(
             0,                                              # system time in milliseconds
             self.master.target_system,                      # target system
@@ -246,6 +249,9 @@ class BlueROV_Connection(Node):
 
     # Services
     def position_target_local_ned_callback(self, request: PositionTargetLocalNED.Request, response: PositionTargetLocalNED.Response):
+        '''
+        Service callback to set a position target
+        '''
         try:
             self.set_position_target_local_ned([request.x, request.y, request.z, request.vx, request.vy, request.vz,
                                                 request.ax, request.ay, request.az, request.yaw, request.yaw_rate])
@@ -253,6 +259,30 @@ class BlueROV_Connection(Node):
             response.position_target_set = True
         except:
             response.position_target_set = False
+        return response
+    
+    def set_mode_callback(self, request: SetMAVMode.Request, response: SetMAVMode.Response):
+        '''
+        Service callback to set the mode of the vehicle
+        '''
+        try:
+            self.set_mode(request.mode)
+            response.mode_set = True
+        except:
+            response.mode_set = False
+
+        return response
+    
+    def set_arm_disarm_callback(self, request: SetArmDisarm.Request, response: SetArmDisarm.Response):
+        '''
+        Service callback to arm or disarm the vehicle
+        '''
+        try:
+            self.arm_disarm(request.set_arm)
+            response.arm_state_set = True
+        except:
+            response.arm_state_set = False
+            
         return response
 
 

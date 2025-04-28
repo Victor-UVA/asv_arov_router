@@ -106,13 +106,13 @@ class Data_Logger(Node):
         self.bluerov_gyro_rates[1] = msg.twist.angular.y
         self.bluerov_gyro_rates[2] = msg.twist.angular.z
 
-    def bluerov_pose_callback(self, msg):
+    def bluerov_pose_callback(self, msg: Odometry):
         self.bluerov_pose_estimate[0] = msg.pose.pose.position.x
         self.bluerov_pose_estimate[1] = msg.pose.pose.position.y
         self.bluerov_pose_estimate[2] = msg.pose.pose.position.z
 
         rot = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
-        self.bluerov_yaw_estimate = Rotation.from_quat(rot).as_euler('xyz', degrees=True)[2]
+        self.bluerov_yaw_estimate = Rotation.from_quat(rot).as_euler('xyz', degrees=False)[2]
 
     def bluerov_apriltag_detect_callback(self, msg: AprilTagDetectionArray):
         if msg.detections:
