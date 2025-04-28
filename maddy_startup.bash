@@ -6,7 +6,7 @@ echo "Today is " `date`
 cd ~/ros2_ws
 source install/setup.bash
 
-NETWORK=VICTOR
+NETWORK=PORTABLE
 
 case $NETWORK in
 

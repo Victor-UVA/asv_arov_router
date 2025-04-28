@@ -26,8 +26,8 @@ class BlueROV_Connection(Node):
 
 
         # Define control constants and variables
-        TRANSLATION_LIMIT = 100
-        ROTATION_LIMIT = 80
+        TRANSLATION_LIMIT = 500
+        ROTATION_LIMIT = 400
         self.MAX_VEL = 0.2
         self.MAX_OMEGA = 0.15
         self.VEL_TO_CMD = TRANSLATION_LIMIT / self.MAX_VEL
