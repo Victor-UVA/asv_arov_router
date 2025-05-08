@@ -1,6 +1,0 @@
-source;share/bluerov/hook/pythonpath.ps1
-source;share/bluerov/hook/pythonpath.dsv
-source;share/bluerov/hook/pythonpath.sh
-source;share/bluerov/hook/ament_prefix_path.ps1
-source;share/bluerov/hook/ament_prefix_path.dsv
-source;share/bluerov/hook/ament_prefix_path.sh

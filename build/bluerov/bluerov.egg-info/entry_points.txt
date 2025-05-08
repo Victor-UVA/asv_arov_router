@@ -1,2 +1,0 @@
-[console_scripts]
-data_collector = bluerov.data_collector:main
