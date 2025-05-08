@@ -34,7 +34,11 @@ def generate_launch_description():
     data_logger_node = Node(
         package="asv_arov_router",
         executable="data_logger",
-        name="data_logger"
+        name="data_logger",
+        parameters=[
+            {'arov_name': AROV_NAME},
+            {'asv_name': ASV_NAME}
+        ]
     )
 
     gscam2_node = Node(

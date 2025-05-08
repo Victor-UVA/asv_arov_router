@@ -154,9 +154,9 @@ class MAVLink_Router(Node):
 
         Args:
             param (list, optional): param1, param2, ..., param8\\
-            1, 2, 3, 4 are a quaternion represention the desired rotation\\
-            5, 6, 7 are roll, pitch, and yaw rates respectively\\
-            8 is thrust
+                1, 2, 3, 4 are a quaternion represention the desired rotation\\
+                5, 6, 7 are roll, pitch, and yaw rates respectively\\
+                8 is thrust
         """
         if len(param) != 8:
             self.get_logger().info('SET_ATTITUDE_TARGET need 8 params')
