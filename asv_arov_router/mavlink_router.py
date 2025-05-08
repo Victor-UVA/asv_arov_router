@@ -251,9 +251,16 @@ class MAVLink_Router(Node):
         '''
         Service callback to set a position target
         '''
-        try: # TODO Currently, because this is passing along a value (even of 0) for every field, the code sending this to the PixHawk is setting the bitmask to not ignore any of the values.  Need some way in the message to indicate which to ignore
-            self.set_position_target_local_ned([request.x, request.y, request.z, request.vx, request.vy, request.vz,
-                                                request.ax, request.ay, request.az, request.yaw, request.yaw_rate])
+        target = [request.x, request.y, request.z, request.vx, request.vy, request.vz,
+                  request.ax, request.ay, request.az, request.yaw, request.yaw_rate]
+        mask = int(request.bit_mask, base=2)
+
+        for idx, set_point in enumerate(target):
+            if not (mask>>idx) & 1:
+                target[idx] = None
+
+        try:
+            self.set_position_target_local_ned(target)
             
             response.position_target_set = True
         except:
