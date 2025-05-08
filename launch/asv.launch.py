@@ -9,19 +9,19 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     bluerov_node = Node(
-        package="bluerov",
+        package="asv_arov_router",
         executable="bluerov_connection",
         name="bluerov_connection"
     )
 
     maddy_node = Node(
-        package="bluerov",
+        package="asv_arov_router",
         executable="maddy_connection",
         name="maddy_connection"
     )
 
     data_logger_node = Node(
-        package="bluerov",
+        package="asv_arov_router",
         executable="data_logger",
         name="data_logger"
     )
@@ -63,7 +63,7 @@ def generate_launch_description():
     )
 
     video_recorder_node = Node(
-        package="bluerov",
+        package="asv_arov_router",
         executable="bluerov_video_recorder",
         name="video_recorder"
     )

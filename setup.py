@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'bluerov'
+package_name = 'asv_arov_router'
 
 setup(
     name=package_name,
@@ -19,15 +19,15 @@ setup(
     zip_safe=True,
     maintainer='malori',
     maintainer_email='abo7fg@virginia.edu',
-    description='Package for running data collection, video recording and processing, and controls on the USV/BlueROV system in the VICTOR lab',
+    description='Package for running data collection, video recording and processing, and controls on the ASV/AROV system in the VICTOR lab',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'bluerov_connection = bluerov.bluerov_connection:main',
-            'maddy_connection = bluerov.maddy_connection:main',
-            'data_logger = bluerov.data_logger:main',
-            'bluerov_video_recorder = bluerov.bluerov_video_recorder:main'
+            'bluerov_connection = asv_arov_router.bluerov_connection:main',
+            'maddy_connection = asv_arov_router.maddy_connection:main',
+            'data_logger = asv_arov_router.data_logger:main',
+            'bluerov_video_recorder = asv_arov_router.bluerov_video_recorder:main'
         ],
     },
 )
