@@ -43,14 +43,14 @@ class MAVLink_Router(Node):
 
 
         # Define subscriptions to other ROS topics
-        self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
+        self.cmd_vel_sub = self.create_subscription(Twist, f'{self.vehicle}/cmd_vel', self.cmd_vel_callback, 10)
         self.cmd_vel_sub
 
         # Define service servers
-        self.set_position_target_local_ned_srv = self.create_service(PositionTargetLocalNED, 'set_position_target_local_ned',
+        self.set_position_target_local_ned_srv = self.create_service(PositionTargetLocalNED, f'{self.vehicle}/set_position_target_local_ned',
                                                                      self.position_target_local_ned_callback)
-        self.set_mode_srv = self.create_service(SetMAVMode, 'set_mav_mode', self.set_mode_callback)
-        self.set_arm_disarm_srv = self.create_service(SetArmDisarm, 'set_arm_disarm', self.set_arm_disarm_callback)
+        self.set_mode_srv = self.create_service(SetMAVMode, f'{self.vehicle}/set_mav_mode', self.set_mode_callback)
+        self.set_arm_disarm_srv = self.create_service(SetArmDisarm, f'{self.vehicle}/set_arm_disarm', self.set_arm_disarm_callback)
 
 
         # Define variables to store the data from the vehicle between publishing it
@@ -65,12 +65,12 @@ class MAVLink_Router(Node):
         self.gps = NavSatFix()
 
 
-        # Define publishers for data from BlueROV to ROS
-        self.acc_publisher_ = self.create_publisher(AccelStamped, 'bluerov/accel', 10)
-        self.gyro_rates_publisher_ = self.create_publisher(TwistStamped, 'bluerov/gyro_rates', 10)
-        self.pose_publisher_ = self.create_publisher(Odometry, 'bluerov/pose_from_dvl', 10)
-        self.imu_publisher_ = self.create_publisher(Imu, 'maddy/imu', 10)
-        self.gps_publisher_ = self.create_publisher(NavSatFix, 'maddy/gps', 10)
+        # Define publishers for data from the vehicle to ROS
+        self.acc_publisher_ = self.create_publisher(AccelStamped, f'{self.vehicle}/accel', 10)
+        self.gyro_rates_publisher_ = self.create_publisher(TwistStamped, f'{self.vehicle}/gyro_rates', 10)
+        self.pose_publisher_ = self.create_publisher(Odometry, f'{self.vehicle}/odom', 10)
+        self.imu_publisher_ = self.create_publisher(Imu, f'{self.vehicle}/imu', 10)
+        self.gps_publisher_ = self.create_publisher(NavSatFix, f'{self.vehicle}/gps', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
 
@@ -298,7 +298,7 @@ class MAVLink_Router(Node):
     def accel_publish(self):
         msg = AccelStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = '/bluerov'
+        msg.header.frame_id = f'/{self.vehicle}'
 
         msg.accel.linear.x = self.accel[0]
         msg.accel.linear.y = self.accel[1]
@@ -309,7 +309,7 @@ class MAVLink_Router(Node):
     def gyro_rates_publish(self):
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = '/bluerov'
+        msg.header.frame_id = f'/{self.vehicle}'
 
         msg.twist.angular.x = self.gyro_rates[0]
         msg.twist.angular.y = self.gyro_rates[1]
@@ -327,7 +327,7 @@ class MAVLink_Router(Node):
         msg = Odometry()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = '/world'
-        msg.child_frame_id = '/bluerov_odom'
+        msg.child_frame_id = f'/{self.vehicle}_odom'
 
         msg.pose.pose.position.x = self.pose_estimate[0]
         msg.pose.pose.position.y = self.pose_estimate[1]
@@ -345,7 +345,7 @@ class MAVLink_Router(Node):
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = '/world'
-        t.child_frame_id = '/bluerov_odom'
+        t.child_frame_id = f'/{self.vehicle}_odom'
 
         t.transform.translation.x = self.pose_estimate[0]
         t.transform.translation.y = self.pose_estimate[1]
@@ -404,7 +404,7 @@ class MAVLink_Router(Node):
 
                 # IMU sensor message, publishes in ENU frame because that is assumed by the robot_localization package
                 self.imu.header.stamp = self.get_clock().now().to_msg()
-                self.imu.header.frame_id = '/maddy'
+                self.imu.header.frame_id = f'/{self.vehicle}'
 
                 self.imu_orientation = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate -90], degrees=True).as_quat()
 
@@ -443,7 +443,7 @@ class MAVLink_Router(Node):
 
             elif msg_type == 'GPS_RAW_INT':
                 self.gps.header.stamp = self.get_clock().now().to_msg()
-                self.gps.header.frame_id = '/maddy'
+                self.gps.header.frame_id = f'/{self.vehicle}'
 
 
                 if msg['fix_type'] == 1:
@@ -463,9 +463,6 @@ class MAVLink_Router(Node):
                 self.gps.latitude = msg['lat'] / (10**7)
                 self.gps.longitude = msg['lon'] / (10**7)
                 self.gps.altitude = msg['alt'] / 1000.0
-
-            else:
-                pass
 
 
 def main():
