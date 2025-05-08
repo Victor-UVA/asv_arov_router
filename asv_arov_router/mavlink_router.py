@@ -2,36 +2,42 @@ from pymavlink import mavutil
 import rclpy
 from rclpy.node import Node
 from scipy.spatial.transform import Rotation
+import numpy as np
 
 from geometry_msgs.msg import AccelStamped, TwistStamped, TransformStamped, Twist
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import Imu, NavSatFix
 from tf2_ros import TransformBroadcaster
 
-from bluerov_interfaces.srv import PositionTargetLocalNED, SetMAVMode, SetArmDisarm
+from asv_arov_interfaces.srv import PositionTargetLocalNED, SetMAVMode, SetArmDisarm
 
-class BlueROV_Connection(Node):
+class MAVLink_Router(Node):
     '''
-    Node to connect to the BlueROV2 over mavlink to translate data from it into ROS topics and allow for autonomous control.
+    Node to connect to a MAVLink vehicle to translate data from it into ROS topics and allow for autonomous control.
     '''
     def __init__(self):
-        super().__init__('bluerov_connection')
-        self.get_logger().info('Hi from BlueROV node!')
+        super().__init__('mavlink_router')
+        self.declare_parameters(parameters=[
+            ('device', 'udpin:localhost:14551'),
+            ('vehicle_name', 'arov'),                   # Used for the topics and services that this node provides
+            ('max_cmd_vel_linear', 0.2),                # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('max_cmd_vel_angular', 0.15),              # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('translation_limit', 250),                 # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
+            ('rotation_limit', 250)])                   # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
         
-        # self.master = mavutil.mavlink_connection('udpin:0.0.0.0:14551')
-        self.master = mavutil.mavlink_connection('udpin:localhost:14551')
+        self.vehicle = self.get_parameter('vehicle_name').value
+        self.master = mavutil.mavlink_connection(self.get_parameter('device').value)
         self.master.wait_heartbeat()
 
-        self.get_logger().info("Heartbeat from system (system %u component %u)" % (self.master.target_system, self.master.target_component))
-        self.get_logger().info('BlueROV connected!')
+        self.get_logger().info(f'Heartbeat from system (system {self.master.target_system} component {self.master.target_component})')
+        self.get_logger().info(f'{self.vehicle} connected!')
 
 
         # Define control constants and variables
-        TRANSLATION_LIMIT = 500
-        ROTATION_LIMIT = 80
-        self.MAX_VEL = 0.2
-        self.MAX_OMEGA = 0.15
-        self.VEL_TO_CMD = TRANSLATION_LIMIT / self.MAX_VEL
-        self.OMEGA_TO_CMD = ROTATION_LIMIT / self.MAX_OMEGA
+        self.MAX_VEL = self.get_parameter('max_cmd_vel_linear').value
+        self.MAX_OMEGA = self.get_parameter('max_cmd_vel_angular').value
+        self.VEL_TO_CMD = self.get_parameter('translation_limit').value / self.MAX_VEL
+        self.OMEGA_TO_CMD = self.get_parameter('rotation_limit').value / self.MAX_OMEGA
 
         self.cmd_vel_enabled = True
 
@@ -47,18 +53,24 @@ class BlueROV_Connection(Node):
         self.set_arm_disarm_srv = self.create_service(SetArmDisarm, 'set_arm_disarm', self.set_arm_disarm_callback)
 
 
-        # Define variables to store the data from the BlueROV between publishing it
+        # Define variables to store the data from the vehicle between publishing it
         self.accel = [0.0,0.0,0.0]
         self.gyro_rates = [0.0, 0.0, 0.0]
         self.pose_estimate = [0.0,0.0,0.0]
         self.orientation_estimate = [0.0,0.0,0.0]
         self.vel_estimate = [0.0,0.0,0.0]
 
+        self.imu = Imu()
+        self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, 90], degrees=True).as_matrix()
+        self.gps = NavSatFix()
+
 
         # Define publishers for data from BlueROV to ROS
         self.acc_publisher_ = self.create_publisher(AccelStamped, 'bluerov/accel', 10)
         self.gyro_rates_publisher_ = self.create_publisher(TwistStamped, 'bluerov/gyro_rates', 10)
         self.pose_publisher_ = self.create_publisher(Odometry, 'bluerov/pose_from_dvl', 10)
+        self.imu_publisher_ = self.create_publisher(Imu, 'maddy/imu', 10)
+        self.gps_publisher_ = self.create_publisher(NavSatFix, 'maddy/gps', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
 
@@ -66,14 +78,8 @@ class BlueROV_Connection(Node):
         publish_timer_period = 0.02 # seconds
         data_timer_period = 0.005
 
-        self.accel_timer = self.create_timer(publish_timer_period, self.accel_publish)
-        self.gyro_rates_timer = self.create_timer(publish_timer_period, self.gyro_rates_publish)
-        self.pose_timer = self.create_timer(publish_timer_period, self.pose_publish)
-        self.data_timer = self.create_timer(data_timer_period, self.parse_bluerov_data)
-
-
-
-
+        self.pub_timer = self.create_timer(publish_timer_period, self.data_pub)
+        self.data_timer = self.create_timer(data_timer_period, self.parse_vehicle_data)
 
     # Commands
     def arm_disarm(self, set_value = None):
@@ -205,11 +211,6 @@ class BlueROV_Connection(Node):
             self.master.target_component,           # target_component
             *rc_channel_values)                     # RC channel list, in microseconds.
 
-
-
-
-
-
     # Subscribers and Support
     def cmd_vel_to_pwm(self, msg):
         '''
@@ -244,9 +245,7 @@ class BlueROV_Connection(Node):
             self.set_cmd_pwm(*self.cmd_vel_to_pwm(msg))
         else:
             return
-
-
-
+        
     # Services
     def position_target_local_ned_callback(self, request: PositionTargetLocalNED.Request, response: PositionTargetLocalNED.Response):
         '''
@@ -285,8 +284,17 @@ class BlueROV_Connection(Node):
             
         return response
 
-
     # Publishers
+    def data_pub(self):
+        '''
+        Publishes all data on a timer set in init
+        '''
+        self.accel_publish()
+        self.gyro_rates_publish()
+        self.imu_publish()
+        self.gps_publish()
+        self.pose_publish()
+
     def accel_publish(self):
         msg = AccelStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
@@ -308,6 +316,12 @@ class BlueROV_Connection(Node):
         msg.twist.angular.z = self.gyro_rates[2]
 
         self.gyro_rates_publisher_.publish(msg)
+
+    def imu_publish(self):
+        self.imu_publisher_.publish(self.imu)
+        
+    def gps_publish(self):
+        self.gps_publisher_.publish(self.gps)
 
     def pose_publish(self):
         msg = Odometry()
@@ -344,17 +358,8 @@ class BlueROV_Connection(Node):
 
         self.tf_broadcaster.sendTransform(t)
 
-
-
-
-
-
-
-
-
-
-    # Data collection from BlueROV
-    def get_bluerov_data(self):
+    # Data collection from connected vehicle
+    def get_vehicle_data(self):
         msgs = []
 
         while True:
@@ -369,9 +374,9 @@ class BlueROV_Connection(Node):
 
         return msgs
     
-    def parse_bluerov_data(self):
+    def parse_vehicle_data(self):
         
-        msgs = self.get_bluerov_data()
+        msgs = self.get_vehicle_data()
         
         for msg_raw in msgs:
             # self.get_logger().info(f'{msg.to_dict()}')
@@ -397,6 +402,31 @@ class BlueROV_Connection(Node):
                 self.gyro_rates[1] = -float(msg['ygyro']) / 1000.0
                 self.gyro_rates[2] = -float(msg['zgyro']) / 1000.0
 
+                # IMU sensor message, publishes in ENU frame because that is assumed by the robot_localization package
+                self.imu.header.stamp = self.get_clock().now().to_msg()
+                self.imu.header.frame_id = '/maddy'
+
+                self.imu_orientation = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate -90], degrees=True).as_quat()
+
+                self.imu.orientation.x = self.imu_orientation[0]
+                self.imu.orientation.y = self.imu_orientation[1]
+                self.imu.orientation.z = self.imu_orientation[2]
+                self.imu.orientation.w = self.imu_orientation[3]
+
+                angular_vel_ned = np.array([msg['xgyro'], msg['ygyro'], msg['zgyro']], dtype=float) / 1000
+                angular_vel_enu = self.ned_to_enu @ angular_vel_ned
+
+                self.imu.angular_velocity.x = angular_vel_enu[0]
+                self.imu.angular_velocity.y = angular_vel_enu[1]
+                self.imu.angular_velocity.z = angular_vel_enu[2]
+
+                linear_accel_ned = -9.81 * np.array([msg['xacc'], msg['yacc'], msg['zacc']], dtype=float) / 1000
+                linear_accel_enu = self.ned_to_enu @ linear_accel_ned
+
+                self.imu.linear_acceleration.x = linear_accel_enu[0]
+                self.imu.linear_acceleration.y = linear_accel_enu[1]
+                self.imu.linear_acceleration.z = linear_accel_enu[2]
+
             elif msg_type == 'LOCAL_POSITION_NED':
                 self.pose_estimate[0] = msg['x']
                 self.pose_estimate[1] = msg['y']
@@ -411,6 +441,29 @@ class BlueROV_Connection(Node):
                 self.orientation_estimate[1] = msg['pitch']
                 self.orientation_estimate[2] = msg['yaw']
 
+            elif msg_type == 'GPS_RAW_INT':
+                self.gps.header.stamp = self.get_clock().now().to_msg()
+                self.gps.header.frame_id = '/maddy'
+
+
+                if msg['fix_type'] == 1:
+                    status = -1
+                elif msg['fix_type'] == 2 or msg['fix_type'] == 3:
+                    status = 0
+                elif msg['fix_type'] == 4:
+                    status = 1
+                elif msg['fix_type'] == 5 or msg['fix_type'] == 6:
+                    status = 2
+                else:
+                    status = -1
+
+                self.gps.status.status = status
+                self.gps.status.service = 1
+
+                self.gps.latitude = msg['lat'] / (10**7)
+                self.gps.longitude = msg['lon'] / (10**7)
+                self.gps.altitude = msg['alt'] / 1000.0
+
             else:
                 pass
 
@@ -418,11 +471,11 @@ class BlueROV_Connection(Node):
 def main():
     rclpy.init()
 
-    bluerov_connection = BlueROV_Connection()
+    mavlink_connection = MAVLink_Router()
 
-    rclpy.spin(bluerov_connection)
+    rclpy.spin(mavlink_connection)
 
-    bluerov_connection.destroy_node()
+    mavlink_connection.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

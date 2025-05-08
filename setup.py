@@ -24,8 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'bluerov_connection = asv_arov_router.bluerov_connection:main',
-            'maddy_connection = asv_arov_router.maddy_connection:main',
+            'mavlink_router = asv_arov_router.mavlink_router:main',
             'data_logger = asv_arov_router.data_logger:main',
             'bluerov_video_recorder = asv_arov_router.bluerov_video_recorder:main'
         ],

@@ -8,16 +8,27 @@ import os
 def generate_launch_description():
     ld = LaunchDescription()
 
+    AROV_NAME = 'arov'
+    ASV_NAME = 'asv'
+
     bluerov_node = Node(
         package="asv_arov_router",
-        executable="bluerov_connection",
-        name="bluerov_connection"
+        executable="mavlink_router",
+        name="arov_connection",
+        parameters=[
+            {'device': 'udpin:localhost:14551'},
+            {'vehicle_name': AROV_NAME}
+        ]
     )
 
     maddy_node = Node(
         package="asv_arov_router",
-        executable="maddy_connection",
-        name="maddy_connection"
+        executable="mavlink_router",
+        name="asv_connection",
+        parameters=[
+            {'device': 'udpin:localhost:14553'},
+            {'vehicle_name': ASV_NAME}
+        ]
     )
 
     data_logger_node = Node(
