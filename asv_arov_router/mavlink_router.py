@@ -17,7 +17,7 @@ class MAVLink_Router(Node):
     '''
     def __init__(self):
         super().__init__('mavlink_router')
-        self.declare_parameters(parameters=[
+        self.declare_parameters(namespace='',parameters=[
             ('device', 'udpin:localhost:14551'),
             ('vehicle_name', 'arov'),                   # Used for the topics and services that this node provides
             ('max_cmd_vel_linear', 0.2),                # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
@@ -408,7 +408,8 @@ class MAVLink_Router(Node):
                 self.imu.header.stamp = self.get_clock().now().to_msg()
                 self.imu.header.frame_id = f'/{self.vehicle}'
 
-                self.imu_orientation = Rotation.from_euler('xyz', [0, 0, self.yaw_estimate -90], degrees=True).as_quat()
+                self.imu_orientation = Rotation.from_euler('xyz', [self.orientation_estimate[0], self.orientation_estimate[1],
+                                                                    self.orientation_estimate[2] - np.rad2deg(90)], degrees=False).as_quat()
 
                 self.imu.orientation.x = self.imu_orientation[0]
                 self.imu.orientation.y = self.imu_orientation[1]

@@ -16,7 +16,7 @@ from tf2_ros.transform_listener import TransformListener
 class Data_Logger(Node):
     def __init__(self):
         super().__init__('data_logger')
-        self.declare_parameters(parameters=[
+        self.declare_parameters(namespace='', parameters=[
             ('arov_name', 'arov'),
             ('asv_name', 'asv')
         ])
