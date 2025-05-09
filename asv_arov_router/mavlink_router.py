@@ -20,10 +20,10 @@ class MAVLink_Router(Node):
         self.declare_parameters(namespace='',parameters=[
             ('device', 'udpin:localhost:14551'),
             ('vehicle_name', 'arov'),                   # Used for the topics and services that this node provides
-            ('max_cmd_vel_linear', 0.2),                # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
-            ('max_cmd_vel_angular', 0.15),              # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
-            ('translation_limit', 250),                 # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
-            ('rotation_limit', 250)])                   # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
+            ('max_cmd_vel_linear', 1.0),                # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('max_cmd_vel_angular', 1.0),              # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('translation_limit', 500),                 # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
+            ('rotation_limit', 500)])                   # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
         
         self.vehicle = self.get_parameter('vehicle_name').value
         self.master = mavutil.mavlink_connection(self.get_parameter('device').value)
@@ -199,11 +199,18 @@ class MAVLink_Router(Node):
             pwm_linear_z (int, optional): Up / down
             pwm_angular_yaw (int, optional): Clockwise / counter-clockwise
         '''
+
+        # TODO Add parameters to map which channels to send controls on for each vehicle
+        # The commented out lines are for the AROV
+        # The others are for the ASV
+
         rc_channel_values = [65535 for _ in range(8)]
-        rc_channel_values[2] = pwm_linear_z
-        rc_channel_values[3] = pwm_angular_z
-        rc_channel_values[4] = pwm_linear_x
-        rc_channel_values[5] = pwm_linear_y
+        rc_channel_values[0] = pwm_linear_x
+        rc_channel_values[1] = pwm_angular_z
+        # rc_channel_values[2] = pwm_linear_z
+        # rc_channel_values[3] = pwm_angular_z
+        # rc_channel_values[4] = pwm_linear_x
+        # rc_channel_values[5] = pwm_linear_y
         self.master.mav.rc_channels_override_send(
             self.master.target_system,              # target_system
             self.master.target_component,           # target_component
