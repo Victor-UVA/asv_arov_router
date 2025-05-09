@@ -142,7 +142,7 @@ class MAVLink_Router(Node):
             self.master.target_system,                      # target system
             self.master.target_component,                   # target component
             mavutil.mavlink.MAV_FRAME_LOCAL_NED,            # frame
-            mask,                                           # mask
+            mask,                                           # mask TODO May need to cast this to an int
             param[0], param[1], param[2],                   # position x,y,z
             param[3], param[4], param[5],                   # velocity x,y,z
             param[6], param[7], param[8],                   # accel x,y,z
