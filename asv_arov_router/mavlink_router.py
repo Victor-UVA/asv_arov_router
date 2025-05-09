@@ -113,9 +113,10 @@ class MAVLink_Router(Node):
         mode_id = self.master.mode_mapping()[mode]
         self.master.set_mode(mode_id)
 
-    def set_position_target_local_ned(self, param=[]):
+    def set_position_target_local_ned(self, param=[], mask='1111110111111111'):
         '''
         Implement MavLink command: SET_POSITION_TARGET_LOCAL_NED
+        https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED
         
         Args:
             param (list, optional): param1, param2, ..., param11\\
@@ -123,18 +124,14 @@ class MAVLink_Router(Node):
                 4, 5, 6 are velocity\\
                 7, 8, 9 are acceleration\\
                 10, 11 are yaw and yaw rate
+            mask (str, optional): Bitmask setting which values the autopilot will ignore, 1 is ignore, 0 is not.  If bit 9 is 1, it will treat accelerations as forces
         '''
 
         if len(param) != 11:
             self.get_logger().info('SET_POSITION_TARGET_LOCAL_NED need 11 params')
 
         # Set mask
-        mask = 0b0000000111111111
-        for i, value in enumerate(param):
-            if value is not None:
-                mask -= 1<<i
-            else:
-                param[i] = 0.0
+        mask = int(mask, base=2)
 
         # self.get_logger().info(f'Sending position target: X: {param[0]}, Y: {param[1]}, Z: {param[2]}, Yaw: {param[9]}')
         self.master.mav.set_position_target_local_ned_send(
@@ -142,7 +139,7 @@ class MAVLink_Router(Node):
             self.master.target_system,                      # target system
             self.master.target_component,                   # target component
             mavutil.mavlink.MAV_FRAME_LOCAL_NED,            # frame
-            mask,                                           # mask TODO May need to cast this to an int
+            mask,                                           # mask
             param[0], param[1], param[2],                   # position x,y,z
             param[3], param[4], param[5],                   # velocity x,y,z
             param[6], param[7], param[8],                   # accel x,y,z
@@ -151,6 +148,7 @@ class MAVLink_Router(Node):
     def set_attitude_target(self, param=[]):
         """
         Implement MavLink command: SET_ATTITUDE_TARGET
+        https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET
 
         Args:
             param (list, optional): param1, param2, ..., param8\\
@@ -253,14 +251,11 @@ class MAVLink_Router(Node):
         '''
         target = [request.x, request.y, request.z, request.vx, request.vy, request.vz,
                   request.ax, request.ay, request.az, request.yaw, request.yaw_rate]
-        mask = int(request.bit_mask, base=2)
-
-        for idx, set_point in enumerate(target):
-            if not (mask>>idx) & 1:
-                target[idx] = None
+        
+        mask = request.bit_mask
 
         try:
-            self.set_position_target_local_ned(target)
+            self.set_position_target_local_ned(target, mask)
             
             response.position_target_set = True
         except:
