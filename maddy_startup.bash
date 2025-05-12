@@ -12,7 +12,7 @@ case $NETWORK in
 
   VICTOR)
     GATE=172.16.0
-    GCS=172.16.0.16
+    GCS=172.16.0.17
     ;;
 
   PORTABLE)
