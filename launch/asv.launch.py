@@ -74,9 +74,6 @@ def generate_launch_description():
             {"image_rect": "/image_rect"},
             {"camera_info": "/camera_info"}
         ]
-        # remappings=[
-        #     ('/image_rect', ' /image_raw')
-        # ]
     )
 
     video_recorder_node = Node(
@@ -97,26 +94,26 @@ def generate_launch_description():
             "-1.571",
             "-3.141",
             "-1.571",
-            f"/{AROV_NAME}",
+            f"/{AROV_NAME}/base_link",
             f"/{AROV_NAME}_camera"
         ]
     )
 
-    bluerov_odom_transform_node = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="bluerov_odom_transform",
-        arguments=[
-            "0",
-            "0",
-            "0",
-            "0",
-            "0",
-            "0",
-            f"/{AROV_NAME}_odom",
-            f"/{AROV_NAME}"
-        ]
-    )
+    # bluerov_odom_transform_node = Node(
+    #     package="tf2_ros",
+    #     executable="static_transform_publisher",
+    #     name="bluerov_odom_transform",
+    #     arguments=[
+    #         "0",
+    #         "0",
+    #         "0",
+    #         "0",
+    #         "0",
+    #         "0",
+    #         f"/{AROV_NAME}/odom",
+    #         f"/{AROV_NAME}"
+    #     ]
+    # )
 
     # End tf2 static transforms
 
@@ -130,6 +127,6 @@ def generate_launch_description():
 
     # tf2 static transforms
     ld.add_action(bluerov_camera_transform_node)
-    ld.add_action(bluerov_odom_transform_node)
+    # ld.add_action(bluerov_odom_transform_node)
 
     return ld

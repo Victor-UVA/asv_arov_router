@@ -107,11 +107,9 @@ class Data_Logger(Node):
 
     def arov_apriltag_detect_callback(self, msg: AprilTagDetectionArray):
         if msg.detections:
-            from_frame = f'{msg.detections[0].family}:{msg.detections[0].id}'
-            to_frame = 'arov'
             for tag in msg.detections:
                 from_frame = f'{tag.family}:{tag.id}'
-                to_frame = 'arov'
+                to_frame = f'{self.arov}/base_link'
                 try:
                     t = self.tf_buffer.lookup_transform(
                         to_frame,
