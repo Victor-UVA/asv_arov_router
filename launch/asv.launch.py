@@ -100,6 +100,22 @@ def generate_launch_description():
         ]
     )
 
+    maddy_odom_map_transform_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="asv_odom_map_transform",
+        arguments=[
+            "0.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "/map",
+            f"/{ASV_NAME}/odom"
+        ]
+    )
+
     # bluerov_odom_transform_node = Node(
     #     package="tf2_ros",
     #     executable="static_transform_publisher",
@@ -128,6 +144,7 @@ def generate_launch_description():
 
     # tf2 static transforms
     ld.add_action(bluerov_camera_transform_node)
+    ld.add_action(maddy_odom_map_transform_node)
     # ld.add_action(bluerov_odom_transform_node)
 
     return ld
