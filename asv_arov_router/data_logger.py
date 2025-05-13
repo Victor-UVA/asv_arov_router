@@ -5,9 +5,10 @@ import csv
 import json
 import os
 
-from geometry_msgs.msg import AccelStamped, TwistStamped, Twist
+from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from apriltag_msgs.msg import AprilTagDetectionArray
+from sensor_msgs.msg import Imu
 
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
@@ -42,20 +43,13 @@ class Data_Logger(Node):
         data_logging_period = 0.02
 
         # AROV subscriptions
-        self.arov_accel_sub = self.create_subscription(
-            AccelStamped,
-            f'{self.arov}/accel',
-            self.arov_accel_callback,
+        self.arov_imu_sub = self.create_subscription(
+            Imu,
+            f'{self.arov}/imu',
+            self.arov_imu_callback,
             10)
-        self.arov_accel_sub  # prevent unused variable warning
-
-        self.arov_gyro_rates_sub = self.create_subscription(
-            TwistStamped,
-            f'{self.arov}/gyro_rates',
-            self.arov_gyro_rates_callback,
-            10)
-        self.arov_gyro_rates_sub  # prevent unused variable warning
-
+        self.arov_imu_sub  # prevent unused variable warning
+        
         self.arov_pose_sub = self.create_subscription(
             Odometry,
             f'{self.arov}/odom',
@@ -78,12 +72,12 @@ class Data_Logger(Node):
         self.arov_apriltag_detect_sub  # prevent unused variable warning
 
         # ASV subscriptions
-        self.asv_yaw_rate_sub = self.create_subscription(
-            TwistStamped,
-            f'{self.arov}/gyro_rates',
-            self.asv_yaw_rate_callback,
+        self.asv_imu_sub = self.create_subscription(
+            Imu,
+            f'{self.asv}/imu',
+            self.asv_imu_callback,
             10)
-        self.asv_yaw_rate_sub  # prevent unused variable warning
+        self.asv_imu_sub  # prevent unused variable warning
 
         self.asv_pose_sub = self.create_subscription(
             Odometry,
@@ -94,15 +88,14 @@ class Data_Logger(Node):
 
         self.create_timer(data_logging_period, self.log_data)
 
-    def arov_accel_callback(self, msg):
-        self.arov_accel[0] = msg.accel.linear.x
-        self.arov_accel[1] = msg.accel.linear.y
-        self.arov_accel[2] = msg.accel.linear.z
+    def arov_imu_callback(self, msg: Imu):
+        self.arov_accel[0] = msg.linear_acceleration.x
+        self.arov_accel[1] = msg.linear_acceleration.y
+        self.arov_accel[2] = msg.linear_acceleration.z
 
-    def arov_gyro_rates_callback(self, msg):
-        self.arov_gyro_rates[0] = msg.twist.angular.x
-        self.arov_gyro_rates[1] = msg.twist.angular.y
-        self.arov_gyro_rates[2] = msg.twist.angular.z
+        self.arov_gyro_rates[0] = msg.angular_velocity.x
+        self.arov_gyro_rates[1] = msg.angular_velocity.y
+        self.arov_gyro_rates[2] = msg.angular_velocity.z
 
     def arov_pose_callback(self, msg: Odometry):
         self.arov_pose_estimate[0] = msg.pose.pose.position.x
@@ -143,10 +136,10 @@ class Data_Logger(Node):
     def arov_cmd_vel_callback(self, msg):
         self.arov_control = msg
 
-    def asv_yaw_rate_callback(self, msg):
-        self.asv_yaw_rate = msg.twist.angular.z
+    def asv_imu_callback(self, msg: Imu):
+        self.asv_yaw_rate = msg.angular_velocity.z
 
-    def asv_pose_callback(self, msg):
+    def asv_pose_callback(self, msg: Odometry):
         self.asv_pose_estimate[0] = msg.pose.pose.position.x
         self.asv_pose_estimate[1] = msg.pose.pose.position.y
         self.asv_pose_estimate[2] = msg.pose.pose.position.z
