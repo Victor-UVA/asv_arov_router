@@ -92,7 +92,8 @@ def generate_launch_description():
             "0",
             "0",
             "-1.571",
-            "-3.141",
+            # "-3.141",
+            "0.0",
             "-1.571",
             f"/{AROV_NAME}/base_link",
             f"/{AROV_NAME}_camera"

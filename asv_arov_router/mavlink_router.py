@@ -59,7 +59,6 @@ class MAVLink_Router(Node):
 
 
         # Define variables to store the data from the vehicle between publishing it
-        # TODO set frames to be the appropriate sensor or component
         self.odom = Odometry()
         self.odom.header.frame_id = f'{self.vehicle}/odom'
         self.odom.child_frame_id = f'{self.vehicle}/base_link'
@@ -374,8 +373,6 @@ class MAVLink_Router(Node):
                 position_enu = self.ned_to_enu.apply(position_ned)
 
                 # Odom message
-                self.odom.header.stamp = now
-
                 self.odom.pose.pose.position.x = position_enu[0]
                 self.odom.pose.pose.position.y = position_enu[1]
                 self.odom.pose.pose.position.z = position_enu[2]
@@ -385,28 +382,31 @@ class MAVLink_Router(Node):
                 self.odom.twist.twist.linear.z =  linear_vel_enu[2]
 
                 # TF message
-                self.t.header.stamp = now
-
                 self.t.transform.translation.x = position_enu[0]
                 self.t.transform.translation.y = position_enu[1]
                 self.t.transform.translation.z = position_enu[2]
 
             elif msg_type == 'ATTITUDE':
-                # Rotated into ENU frame
+                # Rotated into front, left, up frame
                 orientation_ned = Rotation.from_euler('xyz', [msg['roll'], msg['pitch'], msg['yaw']], degrees=False)
-                orientation_enu = (self.ned_to_enu.inv() * orientation_ned * self.ned_to_enu).as_quat()
+                ned_to_flu = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
+                orientation_flu = (ned_to_flu.inv() * orientation_ned * ned_to_flu).as_quat()
                 
                 # Odom message
-                self.odom.pose.pose.orientation.w = orientation_enu[3]
-                self.odom.pose.pose.orientation.x = orientation_enu[0]
-                self.odom.pose.pose.orientation.y = orientation_enu[1]
-                self.odom.pose.pose.orientation.z = orientation_enu[2]
+                self.odom.header.stamp = now
+
+                self.odom.pose.pose.orientation.w = orientation_flu[3]
+                self.odom.pose.pose.orientation.x = orientation_flu[0]
+                self.odom.pose.pose.orientation.y = orientation_flu[1]
+                self.odom.pose.pose.orientation.z = orientation_flu[2]
                 
                 # TF message
-                self.t.transform.rotation.x = orientation_enu[0]
-                self.t.transform.rotation.y = orientation_enu[1]
-                self.t.transform.rotation.z = orientation_enu[2]
-                self.t.transform.rotation.w = orientation_enu[3]
+                self.t.header.stamp = now
+
+                self.t.transform.rotation.x = orientation_flu[0]
+                self.t.transform.rotation.y = orientation_flu[1]
+                self.t.transform.rotation.z = orientation_flu[2]
+                self.t.transform.rotation.w = orientation_flu[3]
 
             elif msg_type == 'GPS_RAW_INT':
                 self.gps.header.stamp = now

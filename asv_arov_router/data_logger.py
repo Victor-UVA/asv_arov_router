@@ -81,7 +81,7 @@ class Data_Logger(Node):
 
         self.asv_pose_sub = self.create_subscription(
             Odometry,
-            f'{self.arov}/pose',
+            f'{self.asv}/pose',
             self.asv_pose_callback,
             10)
         self.asv_pose_sub  # prevent unused variable warning
