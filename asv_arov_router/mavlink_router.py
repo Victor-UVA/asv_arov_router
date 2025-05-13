@@ -4,7 +4,7 @@ from rclpy.node import Node
 from scipy.spatial.transform import Rotation
 import numpy as np
 
-from geometry_msgs.msg import AccelStamped, TwistStamped, TransformStamped, Twist
+from geometry_msgs.msg import TwistStamped, TransformStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu, NavSatFix
 from tf2_ros import TransformBroadcaster
@@ -59,20 +59,28 @@ class MAVLink_Router(Node):
 
 
         # Define variables to store the data from the vehicle between publishing it
-        self.accel = [0.0,0.0,0.0]
-        self.gyro_rates = [0.0, 0.0, 0.0]
-        self.pose_estimate = [0.0,0.0,0.0]
-        self.orientation_estimate = [0.0,0.0,0.0]
-        self.vel_estimate = [0.0,0.0,0.0]
+        # TODO set frames to be the appropriate sensor or component
+        self.odom = Odometry()
+        self.odom.header.frame_id = f'{self.vehicle}/odom'
+        self.odom.child_frame_id = f'{self.vehicle}/base_link'
+
+        self.t = TransformStamped()
+        self.t.header.frame_id = f'{self.vehicle}/odom'
+        self.t.child_frame_id = f'{self.vehicle}/base_link'
+
+        self.pix_vels = TwistStamped()
+        self.pix_vels.header.frame_id = f'/{self.vehicle}/odom'
 
         self.imu = Imu()
-        self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, 90], degrees=True).as_matrix()
+        self.imu.header.frame_id = f'/{self.vehicle}/base_link'
+        
         self.gps = NavSatFix()
+        self.gps.header.frame_id = f'/{self.vehicle}/world'
 
+        self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, -90], degrees=True)
 
         # Define publishers for data from the vehicle to ROS
-        self.acc_publisher_ = self.create_publisher(AccelStamped, f'{self.vehicle}/accel', 10)
-        self.gyro_rates_publisher_ = self.create_publisher(TwistStamped, f'{self.vehicle}/gyro_rates', 10)
+        self.pix_vels_publisher_ = self.create_publisher(TwistStamped, f'{self.vehicle}/pix_ekf_vels', 10)
         self.pose_publisher_ = self.create_publisher(Odometry, f'{self.vehicle}/odom', 10)
         self.imu_publisher_ = self.create_publisher(Imu, f'{self.vehicle}/imu', 10)
         self.gps_publisher_ = self.create_publisher(NavSatFix, f'{self.vehicle}/gps', 10)
@@ -297,74 +305,12 @@ class MAVLink_Router(Node):
         '''
         Publishes all data on a timer set in init
         '''
-        self.accel_publish()
-        self.gyro_rates_publish()
-        self.imu_publish()
-        self.gps_publish()
-        self.pose_publish()
+        self.pose_publisher_.publish(self.odom)
+        self.tf_broadcaster.sendTransform(self.t)
 
-    def accel_publish(self):
-        msg = AccelStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = f'/{self.vehicle}'
-
-        msg.accel.linear.x = self.accel[0]
-        msg.accel.linear.y = self.accel[1]
-        msg.accel.linear.z = self.accel[2]
-
-        self.acc_publisher_.publish(msg)
-
-    def gyro_rates_publish(self):
-        msg = TwistStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = f'/{self.vehicle}'
-
-        msg.twist.angular.x = self.gyro_rates[0]
-        msg.twist.angular.y = self.gyro_rates[1]
-        msg.twist.angular.z = self.gyro_rates[2]
-
-        self.gyro_rates_publisher_.publish(msg)
-
-    def imu_publish(self):
+        self.pix_vels_publisher_.publish(self.pix_vels)
         self.imu_publisher_.publish(self.imu)
-        
-    def gps_publish(self):
-        self.gps_publisher_.publish(self.gps)
-
-    def pose_publish(self):
-        msg = Odometry()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = '/world'
-        msg.child_frame_id = f'/{self.vehicle}_odom'
-
-        msg.pose.pose.position.x = self.pose_estimate[0]
-        msg.pose.pose.position.y = self.pose_estimate[1]
-        msg.pose.pose.position.z = self.pose_estimate[2]
-
-        orientation = Rotation.from_euler('xyz', self.orientation_estimate, degrees=True).as_quat()
-        
-        msg.pose.pose.orientation.w = orientation[3]
-        msg.pose.pose.orientation.x = orientation[0]
-        msg.pose.pose.orientation.y = orientation[1]
-        msg.pose.pose.orientation.z = orientation[2]
-
-        self.pose_publisher_.publish(msg)
-
-        t = TransformStamped()
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = '/world'
-        t.child_frame_id = f'/{self.vehicle}_odom'
-
-        t.transform.translation.x = self.pose_estimate[0]
-        t.transform.translation.y = self.pose_estimate[1]
-        t.transform.translation.z = self.pose_estimate[2]
-
-        t.transform.rotation.x = orientation[0]
-        t.transform.rotation.y = orientation[1]
-        t.transform.rotation.z = orientation[2]
-        t.transform.rotation.w = orientation[3]
-
-        self.tf_broadcaster.sendTransform(t)
+        self.gps_publisher_.publish(self.gps)    
 
     # Data collection from connected vehicle
     def get_vehicle_data(self):
@@ -390,6 +336,7 @@ class MAVLink_Router(Node):
             # self.get_logger().info(f'{msg.to_dict()}')
             msg = msg_raw.to_dict()
             msg_type = msg_raw.get_type()
+            now = self.get_clock().now().to_msg()
 
             if msg == None or msg_type == 'BAD_DATA':
                 pass
@@ -401,59 +348,73 @@ class MAVLink_Router(Node):
                     self.armed = bool(base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED)
 
             elif msg_type == 'SCALED_IMU2':
-                self.accel[0] = 9.81 * float(msg['xacc']) / 1000.0
-                self.accel[1] = -9.81 * float(msg['yacc']) / 1000.0
-                self.accel[2] = -9.81 * float(msg['zacc']) / 1000.0
-
-                # TODO Verify orientation of gyro axes (originally had minus on z)
-                self.gyro_rates[0] = float(msg['xgyro']) / 1000.0
-                self.gyro_rates[1] = -float(msg['ygyro']) / 1000.0
-                self.gyro_rates[2] = -float(msg['zgyro']) / 1000.0
-
-                # IMU sensor message, publishes in ENU frame because that is assumed by the robot_localization package
-                self.imu.header.stamp = self.get_clock().now().to_msg()
-                self.imu.header.frame_id = f'/{self.vehicle}'
-
-                self.imu_orientation = Rotation.from_euler('xyz', [self.orientation_estimate[0], self.orientation_estimate[1],
-                                                                    self.orientation_estimate[2] - np.rad2deg(90)], degrees=False).as_quat()
-
-                self.imu.orientation.x = self.imu_orientation[0]
-                self.imu.orientation.y = self.imu_orientation[1]
-                self.imu.orientation.z = self.imu_orientation[2]
-                self.imu.orientation.w = self.imu_orientation[3]
-
                 angular_vel_ned = np.array([msg['xgyro'], msg['ygyro'], msg['zgyro']], dtype=float) / 1000
-                angular_vel_enu = self.ned_to_enu @ angular_vel_ned
+                angular_vel_enu = self.ned_to_enu.apply(angular_vel_ned)
+
+                linear_accel_ned = 9.81 * np.array([msg['xacc'], msg['yacc'], msg['zacc']], dtype=float) / 1000
+                linear_accel_enu = self.ned_to_enu.apply(linear_accel_ned)
+
+                # IMU sensor message
+                self.imu.header.stamp = now
+
+                # self.imu.orientation.x = self.orientation[0]
+                # self.imu.orientation.y = self.orientation[1]
+                # self.imu.orientation.z = self.orientation[2]
+                # self.imu.orientation.w = self.orientation[3]
+                self.imu.orientation = self.odom.pose.pose.orientation
 
                 self.imu.angular_velocity.x = angular_vel_enu[0]
                 self.imu.angular_velocity.y = angular_vel_enu[1]
                 self.imu.angular_velocity.z = angular_vel_enu[2]
-
-                linear_accel_ned = -9.81 * np.array([msg['xacc'], msg['yacc'], msg['zacc']], dtype=float) / 1000
-                linear_accel_enu = self.ned_to_enu @ linear_accel_ned
-
                 self.imu.linear_acceleration.x = linear_accel_enu[0]
                 self.imu.linear_acceleration.y = linear_accel_enu[1]
                 self.imu.linear_acceleration.z = linear_accel_enu[2]
 
             elif msg_type == 'LOCAL_POSITION_NED':
-                self.pose_estimate[0] = msg['x']
-                self.pose_estimate[1] = msg['y']
-                self.pose_estimate[2] = msg['z']
+                linear_vel_ned = np.array([msg['vx'], msg['vy'], msg['vz']])
+                position_ned = np.array([msg['x'], msg['y'], msg['z']])
 
-                self.vel_estimate[0] = msg['vx']
-                self.vel_estimate[1] = msg['vy']
-                self.vel_estimate[2] = msg['vz']
+                linear_vel_enu = self.ned_to_enu.apply(linear_vel_ned)
+                position_enu = self.ned_to_enu.apply(position_ned)
+                
+                # Velocity estimate message
+                self.pix_vels.header.stamp = now
+                self.pix_vels.twist.linear.x = linear_vel_enu[0]
+                self.pix_vels.twist.linear.y = linear_vel_enu[1]
+                self.pix_vels.twist.linear.z = linear_vel_enu[2]
+
+                # Odom message
+                self.odom.header.stamp = now
+
+                self.odom.pose.pose.position.x = position_enu[0]
+                self.odom.pose.pose.position.y = position_enu[1]
+                self.odom.pose.pose.position.z = position_enu[2]
+
+                # TF message
+                self.t.header.stamp = now
+
+                self.t.transform.translation.x = position_enu[0]
+                self.t.transform.translation.y = position_enu[1]
+                self.t.transform.translation.z = position_enu[2]
 
             elif msg_type == 'ATTITUDE':
-                self.orientation_estimate[0] = msg['roll']
-                self.orientation_estimate[1] = msg['pitch']
-                self.orientation_estimate[2] = msg['yaw']
+                # Rotated into ENU frame
+                orientation = (self.ned_to_enu.inv() * Rotation.from_euler('xyz', [msg['roll'], msg['pitch'], msg['yaw']], degrees=False) * self.ned_to_enu).as_quat()
+                
+                # Odom message
+                self.odom.pose.pose.orientation.w = orientation[3]
+                self.odom.pose.pose.orientation.x = orientation[0]
+                self.odom.pose.pose.orientation.y = orientation[1]
+                self.odom.pose.pose.orientation.z = orientation[2]
+                
+                # TF message
+                self.t.transform.rotation.x = orientation[0]
+                self.t.transform.rotation.y = orientation[1]
+                self.t.transform.rotation.z = orientation[2]
+                self.t.transform.rotation.w = orientation[3]
 
             elif msg_type == 'GPS_RAW_INT':
-                self.gps.header.stamp = self.get_clock().now().to_msg()
-                self.gps.header.frame_id = f'/{self.vehicle}'
-
+                self.gps.header.stamp = now
 
                 if msg['fix_type'] == 1:
                     status = -1
