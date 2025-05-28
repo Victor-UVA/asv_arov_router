@@ -43,6 +43,15 @@ def generate_launch_description():
         ]
     )
 
+    arov_ekf_global_node = Node(
+        package="asv_arov_localization",
+        executable="arov_ekf_global",
+        name="arov_ekf_global",
+        parameters=[
+            {'vehicle_name': AROV_NAME}
+        ]
+    )
+
     gscam2_node = Node(
         package="gscam2",
         executable="gscam_main",
@@ -137,6 +146,7 @@ def generate_launch_description():
 
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
+    ld.add_action(arov_ekf_global_node)
     ld.add_action(data_logger_node)
     ld.add_action(gscam2_node)
     ld.add_action(apriltag_node)
