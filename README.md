@@ -98,3 +98,9 @@ The gscam2 node needs the camera calibration data from the BlueROV's camera so t
 
 # Saving the Video Stream from the BlueROV Using gstreamer
 - gstreamer command to save video from webcam to an mp4:  ```gst-launch-1.0 -e v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert ! x264enc ! mp4mux ! filesink location=video.mp4```
+
+
+# Recording Data
+## ROS Bag
+- Current command to record all topics except for the camera feed (to reduce bag size): ```ros2 bag record /arov/cmd_vel /arov/gps /arov/imu /arov/odom /asv/cmd_vel /asv/gps /asv/imu /asv/odom /asv/pose /camera_info /detections /rosout /tf /tf_static -o {BAG_NAME}```
+    - Run this from ```ros2_ws/data_log/ros_bags```
