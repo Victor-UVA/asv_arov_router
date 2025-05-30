@@ -125,6 +125,38 @@ def generate_launch_description():
         ]
     )
 
+    tag_36h11_id_0_transform_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="tag_36h11_id_0_transform",
+        arguments=[
+            "2.0",
+            "0.0",
+            "0.0",
+            "-1.571", # Yaw
+            "0.0", # Pitch
+            "1.571", # Roll
+            "/map",
+            "/tag36h11:0_true"
+        ]
+    )
+
+    tag_36h11_id_2_transform_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="tag_36h11_id_2_transform",
+        arguments=[
+            "-2.0",
+            "0.0",
+            "0.0",
+            "1.571", # Yaw
+            "0.0", # Pitch
+            "1.571", # Roll
+            "/map",
+            "/tag36h11:2_true"
+        ]
+    )
+
     # bluerov_odom_transform_node = Node(
     #     package="tf2_ros",
     #     executable="static_transform_publisher",
@@ -155,6 +187,8 @@ def generate_launch_description():
     # tf2 static transforms
     ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
+    ld.add_action(tag_36h11_id_0_transform_node)
+    ld.add_action(tag_36h11_id_2_transform_node)
     # ld.add_action(bluerov_odom_transform_node)
 
     return ld
