@@ -130,7 +130,7 @@ def generate_launch_description():
         executable="static_transform_publisher",
         name="tag_36h11_id_0_transform",
         arguments=[
-            "2.0",
+            "2.735",
             "0.0",
             "0.0",
             "-1.571", # Yaw
@@ -146,7 +146,7 @@ def generate_launch_description():
         executable="static_transform_publisher",
         name="tag_36h11_id_2_transform",
         arguments=[
-            "-2.0",
+            "-2.735",
             "0.0",
             "0.0",
             "1.571", # Yaw
