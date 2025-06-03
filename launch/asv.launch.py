@@ -48,7 +48,8 @@ def generate_launch_description():
         executable="arov_ekf_global",
         name="arov_ekf_global",
         parameters=[
-            {'vehicle_name': AROV_NAME}
+            {'vehicle_name': AROV_NAME},
+            {'ros_bag': False}
         ]
     )
 
