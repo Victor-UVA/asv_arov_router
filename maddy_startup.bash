@@ -24,6 +24,7 @@ esac
 
 gst-launch-1.0 udpsrc port=5600 ! queue ! udpsink host=$GCS port=5502 &
 
+# mavproxy.py --master=/dev/ttyACM1 --out=udpbcast:$GATE.255:14552 --out=udpbcast:localhost:14553 --daemon --cmd="set moddebug 2; module load optitrack; optitrack set server $SERVER; optitrack set client $CLIENT; optitrack set obj_id $OBJ_ID; optitrack start;" &
 mavproxy.py --master=/dev/ttyACM0 --out=udpbcast:$GATE.255:14552 --out=udpbcast:localhost:14553 --daemon &
 mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:$GATE.255:14550 --out=udpbcast:localhost:14551 --daemon &
 
