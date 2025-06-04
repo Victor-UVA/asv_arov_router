@@ -50,8 +50,8 @@ def generate_launch_description():
         executable="arov_ekf_global",
         name="arov_ekf_global",
         parameters=[
-            {'vehicle_name': AROV_NAME},
-            {'ros_bag': False}
+            {'~vehicle_name': AROV_NAME},
+            {'~ros_bag': False}
         ]
     )
 
@@ -143,7 +143,7 @@ def generate_launch_description():
 
             for family in apriltags_layout['apriltags']:
                 for tag in family['tags']:
-                    tag_rot = (static_rot * Rotation.from_euler('xyz', [tag['roll'], tag['pitch'], tag['yaw']])).as_euler('zyx')
+                    tag_rot = (Rotation.from_euler('xyz', [tag['roll'], tag['pitch'], tag['yaw']]) * static_rot).as_euler('xyz')
 
                     ld.add_action(Node(
                         package="tf2_ros",
@@ -157,7 +157,7 @@ def generate_launch_description():
                             '--pitch', f'{tag_rot[1]}',
                             '--roll', f'{tag_rot[0]}',
                             '--frame-id', "/map",
-                            '--child-frame-id', f"/{family['family']}:{tag['id']}_true"
+                            '--child-frame-id', f"/tag{family['family']}:{tag['id']}_true"
                         ]
                     ))
 
