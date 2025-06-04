@@ -4,6 +4,8 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
 import os
+import yaml
+from scipy.spatial.transform import Rotation
 
 def generate_launch_description():
     ld = LaunchDescription()
@@ -126,37 +128,74 @@ def generate_launch_description():
         ]
     )
 
-    tag_36h11_id_0_transform_node = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="tag_36h11_id_0_transform",
-        arguments=[
-            "2.735",
-            "0.0",
-            "0.0",
-            "-1.571", # Yaw
-            "0.0", # Pitch
-            "1.571", # Roll
-            "/map",
-            "/tag36h11:0_true"
-        ]
+    apriltags = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'apriltag_layout_config.yaml'
     )
 
-    tag_36h11_id_2_transform_node = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="tag_36h11_id_2_transform",
-        arguments=[
-            "-2.735",
-            "0.0",
-            "0.0",
-            "1.571", # Yaw
-            "0.0", # Pitch
-            "1.571", # Roll
-            "/map",
-            "/tag36h11:2_true"
-        ]
-    )
+    apriltag_transform_nodes = []
+    with open(apriltags) as stream:
+        try:
+            apriltags_layout = yaml.safe_load(stream)
+            static_rot = Rotation.from_euler('xyz', [apriltags_layout['static_rotation']['roll'],
+                                                     apriltags_layout['static_rotation']['pitch'],
+                                                     apriltags_layout['static_rotation']['yaw']])
+
+            for family in apriltags_layout['apriltags']:
+                for tag in family['tags']:
+                    tag_rot = (static_rot * Rotation.from_euler('xyz', [tag['roll'], tag['pitch'], tag['yaw']])).as_euler('zyx')
+
+                    apriltag_transform_nodes.append(Node(
+                        package="tf2_ros",
+                        executable="static_transform_publisher",
+                        name=f"tag_{family['family']}:{tag['id']}_transform",
+                        arguments=[
+                            f"{tag['x']:.3f}",
+                            f"{tag['y']:.3f}",
+                            f"{tag['z']:.3f}",
+                            f"{tag_rot[2]:.3f}", # Yaw
+                            f"{tag_rot[1]:.3f}", # Pitch
+                            f"{tag_rot[0]:.3f}", # Roll
+                            "/map",
+                            f"/{family['family']}:{tag['id']}_true"
+                        ]
+                    ))
+
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    # tag_36h11_id_0_transform_node = Node(
+    #     package="tf2_ros",
+    #     executable="static_transform_publisher",
+    #     name="tag_36h11_id_0_transform",
+    #     arguments=[
+    #         "2.735",
+    #         "0.0",
+    #         "0.0",
+    #         "-1.571", # Yaw
+    #         "0.0", # Pitch
+    #         "1.571", # Roll
+    #         "/map",
+    #         "/tag36h11:0_true"
+    #     ]
+    # )
+
+    # tag_36h11_id_2_transform_node = Node(
+    #     package="tf2_ros",
+    #     executable="static_transform_publisher",
+    #     name="tag_36h11_id_2_transform",
+    #     arguments=[
+    #         "-2.735",
+    #         "0.0",
+    #         "0.0",
+    #         "1.571", # Yaw
+    #         "0.0", # Pitch
+    #         "1.571", # Roll
+    #         "/map",
+    #         "/tag36h11:2_true"
+    #     ]
+    # )
 
     # bluerov_odom_transform_node = Node(
     #     package="tf2_ros",
@@ -188,8 +227,10 @@ def generate_launch_description():
     # tf2 static transforms
     ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
-    ld.add_action(tag_36h11_id_0_transform_node)
-    ld.add_action(tag_36h11_id_2_transform_node)
+    for node in apriltag_transform_nodes:
+        ld.add_action(node)
+    # ld.add_action(tag_36h11_id_0_transform_node)
+    # ld.add_action(tag_36h11_id_2_transform_node)
     # ld.add_action(bluerov_odom_transform_node)
 
     return ld

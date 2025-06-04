@@ -1,0 +1,50 @@
+static_rotation: # Leaves the tag facing toward the origin
+  roll: 1.571
+  pitch: 0.0
+  yaw: -1.571
+
+apriltags:
+  - family: 36h11
+    tags:
+    - id: 0
+      x: 2.735
+      y: 0
+      z: 0
+      roll: 0
+      pitch: 0
+      yaw: 0
+    - id: 1
+      x: -2.735
+      y: 0
+      z: 0
+      roll: 0
+      pitch: 0
+      yaw: -3.141
+    - id: 2
+      x: 1
+      y: 1
+      z: 1
+      roll: 0
+      pitch: 0
+      yaw: 0
+    - id: 3
+      x: 1
+      y: 1
+      z: 1
+      roll: 0
+      pitch: 0
+      yaw: 0
+    - id: 4
+      x: 1
+      y: 1
+      z: 1
+      roll: 0
+      pitch: 0
+      yaw: 0
+    - id: 5
+      x: 1
+      y: 1
+      z: 1
+      roll: 0
+      pitch: 0
+      yaw: 0
