@@ -100,15 +100,14 @@ def generate_launch_description():
         executable="static_transform_publisher",
         name="bluerov_camera_transform",
         arguments=[
-            "0.15",
-            "0",
-            "0",
-            "-1.571",
-            # "-3.141",
-            "0.0",
-            "-1.571",
-            f"/{AROV_NAME}/base_link",
-            f"/{AROV_NAME}_camera"
+            '--x', '0.15',
+            '--y', '0.0',
+            '--z', '0.0',
+            '--yaw', '-1.571',
+            '--pitch', '0.0',
+            '--roll', '-1.571',
+            '--frame-id', f"/{AROV_NAME}/base_link",
+            '--child-frame-id', f"/{AROV_NAME}_camera"
         ]
     )
 
@@ -117,14 +116,14 @@ def generate_launch_description():
         executable="static_transform_publisher",
         name="asv_odom_map_transform",
         arguments=[
-            "0.0",
-            "0.0",
-            "0.0",
-            "0.0",
-            "0.0",
-            "0.0",
-            "/map",
-            f"/{ASV_NAME}/odom"
+            '--x', '0.0',
+            '--y', '0.0',
+            '--z', '0.0',
+            '--yaw', '0.0',
+            '--pitch', '0.0',
+            '--roll', '0.0',
+            '--frame-id', "/map",
+            '--child-frame-id', f"/{ASV_NAME}/odom"
         ]
     )
 
@@ -134,7 +133,7 @@ def generate_launch_description():
         'apriltag_layout_config.yaml'
     )
 
-    apriltag_transform_nodes = []
+    # apriltag_transform_nodes = []
     with open(apriltags) as stream:
         try:
             apriltags_layout = yaml.safe_load(stream)
@@ -146,72 +145,24 @@ def generate_launch_description():
                 for tag in family['tags']:
                     tag_rot = (static_rot * Rotation.from_euler('xyz', [tag['roll'], tag['pitch'], tag['yaw']])).as_euler('zyx')
 
-                    apriltag_transform_nodes.append(Node(
+                    ld.add_action(Node(
                         package="tf2_ros",
                         executable="static_transform_publisher",
-                        name=f"tag_{family['family']}:{tag['id']}_transform",
+                        name=f"tag_{family['family']}_{tag['id']}_transform",
                         arguments=[
-                            f"{tag['x']:.3f}",
-                            f"{tag['y']:.3f}",
-                            f"{tag['z']:.3f}",
-                            f"{tag_rot[2]:.3f}", # Yaw
-                            f"{tag_rot[1]:.3f}", # Pitch
-                            f"{tag_rot[0]:.3f}", # Roll
-                            "/map",
-                            f"/{family['family']}:{tag['id']}_true"
+                            '--x', f'{tag['x']}',
+                            '--y', f'{tag['y']}',
+                            '--z', f'{tag['z']}',
+                            '--yaw', f'{tag_rot[2]}',
+                            '--pitch', f'{tag_rot[1]}',
+                            '--roll', f'{tag_rot[0]}',
+                            '--frame-id', "/map",
+                            '--child-frame-id', f"/{family['family']}:{tag['id']}_true"
                         ]
                     ))
 
         except yaml.YAMLError as exc:
             print(exc)
-
-    # tag_36h11_id_0_transform_node = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="tag_36h11_id_0_transform",
-    #     arguments=[
-    #         "2.735",
-    #         "0.0",
-    #         "0.0",
-    #         "-1.571", # Yaw
-    #         "0.0", # Pitch
-    #         "1.571", # Roll
-    #         "/map",
-    #         "/tag36h11:0_true"
-    #     ]
-    # )
-
-    # tag_36h11_id_2_transform_node = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="tag_36h11_id_2_transform",
-    #     arguments=[
-    #         "-2.735",
-    #         "0.0",
-    #         "0.0",
-    #         "1.571", # Yaw
-    #         "0.0", # Pitch
-    #         "1.571", # Roll
-    #         "/map",
-    #         "/tag36h11:2_true"
-    #     ]
-    # )
-
-    # bluerov_odom_transform_node = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="bluerov_odom_transform",
-    #     arguments=[
-    #         "0",
-    #         "0",
-    #         "0",
-    #         "0",
-    #         "0",
-    #         "0",
-    #         f"/{AROV_NAME}/odom",
-    #         f"/{AROV_NAME}"
-    #     ]
-    # )
 
     # End tf2 static transforms
 
@@ -227,10 +178,5 @@ def generate_launch_description():
     # tf2 static transforms
     ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
-    for node in apriltag_transform_nodes:
-        ld.add_action(node)
-    # ld.add_action(tag_36h11_id_0_transform_node)
-    # ld.add_action(tag_36h11_id_2_transform_node)
-    # ld.add_action(bluerov_odom_transform_node)
 
     return ld

@@ -3,7 +3,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
-from bluerov_interfaces.srv import SetRecording
+from asv_arov_interfaces.srv import SetRecording
 
 class BlueROV_Video_Recorder(Node):
     def __init__(self):
