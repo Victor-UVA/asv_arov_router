@@ -137,9 +137,9 @@ def generate_launch_description():
     with open(apriltags) as stream:
         try:
             apriltags_layout = yaml.safe_load(stream)
-            static_rot = Rotation.from_euler('xyz', [apriltags_layout['static_rotation']['roll'],
-                                                     apriltags_layout['static_rotation']['pitch'],
-                                                     apriltags_layout['static_rotation']['yaw']])
+            static_rot = Rotation.from_euler('xyz', [apriltags_layout['static_offset']['roll'],
+                                                     apriltags_layout['static_offset']['pitch'],
+                                                     apriltags_layout['static_offset']['yaw']])
 
             for family in apriltags_layout['apriltags']:
                 for tag in family['tags']:

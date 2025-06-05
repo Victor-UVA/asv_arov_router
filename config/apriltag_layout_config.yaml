@@ -1,4 +1,7 @@
-static_rotation: # Leaves the tag facing toward the origin
+static_offset: # Leaves the tag facing toward the origin
+  x: 0
+  y: 0
+  z: 0
   roll: 1.571
   pitch: 0.0
   yaw: -1.571
