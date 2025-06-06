@@ -17,6 +17,7 @@ def generate_launch_description():
         package="asv_arov_router",
         executable="mavlink_router",
         name="arov_connection",
+        namespace=f'{AROV_NAME}',
         parameters=[
             {'device': 'udpin:localhost:14551'},
             {'vehicle_name': AROV_NAME},
@@ -28,6 +29,7 @@ def generate_launch_description():
         package="asv_arov_router",
         executable="mavlink_router",
         name="asv_connection",
+        namespace=f'{ASV_NAME}',
         parameters=[
             {'device': 'udpin:localhost:14553'},
             {'vehicle_name': ASV_NAME},
@@ -49,6 +51,7 @@ def generate_launch_description():
         package="asv_arov_localization",
         executable="arov_ekf_global",
         name="arov_ekf_global",
+        namespace=f'{AROV_NAME}',
         parameters=[
             {'~vehicle_name': AROV_NAME},
             {'~ros_bag': False}
@@ -59,6 +62,7 @@ def generate_launch_description():
         package="gscam2",
         executable="gscam_main",
         name="gscam",
+        namespace=f'{AROV_NAME}',
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'ost.yaml')}"},
@@ -81,6 +85,7 @@ def generate_launch_description():
         package="apriltag_ros",
         executable="apriltag_node",
         name="apriltag",
+        namespace=f'{AROV_NAME}',
         parameters=[
             config,
             {"image_rect": "/image_rect"},
@@ -91,7 +96,8 @@ def generate_launch_description():
     video_recorder_node = Node(
         package="asv_arov_router",
         executable="bluerov_video_recorder",
-        name="video_recorder"
+        name="video_recorder",
+        namespace=f'{AROV_NAME}'
     )
 
     # tf2 static transforms
