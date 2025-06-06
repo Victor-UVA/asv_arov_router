@@ -1,4 +1,4 @@
-static_offset: # Leaves the tag facing toward the origin
+static_offset: # Leaves the tag facing toward and offset from the OptiTrack origin
   x: 0
   y: 0
   z: 0

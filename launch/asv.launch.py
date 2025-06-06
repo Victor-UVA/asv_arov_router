@@ -140,6 +140,9 @@ def generate_launch_description():
             static_rot = Rotation.from_euler('xyz', [apriltags_layout['static_offset']['roll'],
                                                      apriltags_layout['static_offset']['pitch'],
                                                      apriltags_layout['static_offset']['yaw']])
+            static_translation = [apriltags_layout['static_offset']['x'],
+                                  apriltags_layout['static_offset']['y'],
+                                  apriltags_layout['static_offset']['z']]
 
             for family in apriltags_layout['apriltags']:
                 for tag in family['tags']:
@@ -150,9 +153,9 @@ def generate_launch_description():
                         executable="static_transform_publisher",
                         name=f"tag_{family['family']}_{tag['id']}_transform",
                         arguments=[
-                            '--x', f'{tag['x']}',
-                            '--y', f'{tag['y']}',
-                            '--z', f'{tag['z']}',
+                            '--x', f'{tag['x'] + static_translation[0]}',
+                            '--y', f'{tag['y'] + static_translation[1]}',
+                            '--z', f'{tag['z'] + static_translation[2]}',
                             '--yaw', f'{tag_rot[2]}',
                             '--pitch', f'{tag_rot[1]}',
                             '--roll', f'{tag_rot[0]}',
