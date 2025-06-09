@@ -71,7 +71,7 @@ def generate_launch_description():
             {"frame_id": f"/{AROV_NAME}_camera"}
         ],
         remappings=[
-            ('/image_raw', '/image_rect')
+            ('/arov/image_raw', '/arov/image_rect')
         ]
     )
 

@@ -19,7 +19,7 @@ class MAVLink_Router(Node):
         super().__init__('mavlink_router')
         self.declare_parameters(namespace='',parameters=[
             ('device', 'udpin:localhost:14551'),
-            ('vehicle_name', 'arov'),                       # Used for the topics and services that this node provides
+            # ('vehicle_name', 'arov'),                       # Used for the topics and services that this node provides
             ('rc_override_mapping', [4, 5, 2, 6, 7, 3]),    # Which RC channels (out of 0-7) to map x, y, z, roll, pitch, yaw commands to (assumes that mixing servo outputs occurs on the vehicle)
                                                             #   Axes are in the vehicle frame (NED)
                                                             #   Roll and pitch are not currently used
@@ -28,7 +28,7 @@ class MAVLink_Router(Node):
             ('translation_limit', 500),                     # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
             ('rotation_limit', 500)])                       # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
         
-        self.vehicle = self.get_parameter('vehicle_name').value
+        self.vehicle = self.get_namespace().strip('/')
         self.master = mavutil.mavlink_connection(self.get_parameter('device').value)
         self.master.wait_heartbeat()
 
@@ -48,14 +48,14 @@ class MAVLink_Router(Node):
 
 
         # Define subscriptions to other ROS topics
-        self.cmd_vel_sub = self.create_subscription(Twist, f'{self.vehicle}/cmd_vel', self.cmd_vel_callback, 10)
+        self.cmd_vel_sub = self.create_subscription(Twist, f'{self.get_namespace()}/cmd_vel', self.cmd_vel_callback, 10)
         self.cmd_vel_sub
 
         # Define service servers
-        self.set_position_target_local_ned_srv = self.create_service(PositionTargetLocalNED, f'{self.vehicle}/set_position_target_local_ned',
+        self.set_position_target_local_ned_srv = self.create_service(PositionTargetLocalNED, '/set_position_target_local_ned',
                                                                      self.position_target_local_ned_callback)
-        self.set_mode_srv = self.create_service(SetMAVMode, f'{self.vehicle}/set_mav_mode', self.set_mode_callback)
-        self.set_arm_disarm_srv = self.create_service(SetArmDisarm, f'{self.vehicle}/set_arm_disarm', self.set_arm_disarm_callback)
+        self.set_mode_srv = self.create_service(SetMAVMode, '/set_mav_mode', self.set_mode_callback)
+        self.set_arm_disarm_srv = self.create_service(SetArmDisarm, '/set_arm_disarm', self.set_arm_disarm_callback)
 
 
         # Define variables to store the data from the vehicle between publishing it
@@ -76,9 +76,9 @@ class MAVLink_Router(Node):
         self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, -90], degrees=True)
 
         # Define publishers for data from the vehicle to ROS
-        self.pose_publisher_ = self.create_publisher(Odometry, f'{self.vehicle}/odom', 10)
-        self.imu_publisher_ = self.create_publisher(Imu, f'{self.vehicle}/imu', 10)
-        self.gps_publisher_ = self.create_publisher(NavSatFix, f'{self.vehicle}/gps', 10)
+        self.pose_publisher_ = self.create_publisher(Odometry, '/odom', 10)
+        self.imu_publisher_ = self.create_publisher(Imu, '/imu', 10)
+        self.gps_publisher_ = self.create_publisher(NavSatFix, '/gps', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
 
