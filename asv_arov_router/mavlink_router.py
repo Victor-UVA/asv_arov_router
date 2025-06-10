@@ -45,6 +45,9 @@ class MAVLink_Router(Node):
         self.cmd_vel_enabled = True
         self.rc_override_mapping = {'x': self.get_parameter('rc_override_mapping').value[0], 'y': self.get_parameter('rc_override_mapping').value[1], 'z': self.get_parameter('rc_override_mapping').value[2],
                                     'roll': self.get_parameter('rc_override_mapping').value[3], 'pitch': self.get_parameter('rc_override_mapping').value[4], 'yaw': self.get_parameter('rc_override_mapping').value[5]}
+        
+        self.camera_tilt = 0
+        self.camera_gimbal_range = np.deg2rad([-25, 90])
 
 
         # Define subscriptions to other ROS topics
@@ -428,6 +431,16 @@ class MAVLink_Router(Node):
                 self.gps.latitude = msg['lat'] / (10**7)
                 self.gps.longitude = msg['lon'] / (10**7)
                 self.gps.altitude = msg['alt'] / 1000.0
+
+            # elif msg_type == 'SERVO_OUTPUT_RAW':
+            #     self.get_logger().info(f'{msg_type}, {msg['servo10_raw']}')
+
+            elif msg_type == 'GIMBAL_DEVICE_ATTITUDE_STATUS':
+                self.camera_tilt = Rotation.from_quat([*msg['q'][1:], msg['q'][0]]).as_euler('xyz')[1]
+                self.get_logger().info(f'{self.camera_tilt}')
+            
+            # else:
+            #     self.get_logger().info(f'{msg_type}, {msg}')
 
 
 def main():
