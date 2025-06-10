@@ -11,7 +11,7 @@ apriltags:
     tags:
     - id: 0
       x: 2.735
-      y: -0.285
+      y: 0.285
       z: 0
       roll: 0
       pitch: -0.05
@@ -27,7 +27,7 @@ apriltags:
 
     - id: 2
       x: 2.735
-      y: 0.305
+      y: -0.305
       z: 0
       roll: 0
       pitch: -0.05
@@ -35,7 +35,7 @@ apriltags:
 
     - id: 4
       x: -2.735
-      y: 0.305
+      y: -0.305
       z: 0
       roll: 0
       pitch: 0
@@ -51,7 +51,7 @@ apriltags:
 
     - id: 6
       x: -2.735
-      y: -0.285
+      y: 0.285
       z: 0
       roll: 0
       pitch: 0

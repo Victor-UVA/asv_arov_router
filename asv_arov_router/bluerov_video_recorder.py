@@ -10,12 +10,12 @@ class BlueROV_Video_Recorder(Node):
         super().__init__('bluerov_video_recorder')
         self.subscription = self.create_subscription(
             Image,
-            '/image_rect',
+            f'{self.get_namespace()}/image_rect',
             self.listener_callback,
             10)
         self.br = CvBridge()
 
-        self.srv = self.create_service(SetRecording, 'set_recording', self.set_recording_callback)
+        self.srv = self.create_service(SetRecording, f'{self.get_namespace()}/set_recording', self.set_recording_callback)
         self.recording = False
 
         self.size = (1920, 1080) # Webcam video input

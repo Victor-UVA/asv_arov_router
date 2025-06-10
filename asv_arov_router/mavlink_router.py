@@ -76,9 +76,9 @@ class MAVLink_Router(Node):
         self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, -90], degrees=True)
 
         # Define publishers for data from the vehicle to ROS
-        self.pose_publisher_ = self.create_publisher(Odometry, '/odom', 10)
-        self.imu_publisher_ = self.create_publisher(Imu, '/imu', 10)
-        self.gps_publisher_ = self.create_publisher(NavSatFix, '/gps', 10)
+        self.pose_publisher_ = self.create_publisher(Odometry, f'{self.get_namespace()}/odom', 10)
+        self.imu_publisher_ = self.create_publisher(Imu, f'{self.get_namespace()}/imu', 10)
+        self.gps_publisher_ = self.create_publisher(NavSatFix, f'{self.get_namespace()}/gps', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
 
