@@ -69,7 +69,7 @@ def generate_launch_description():
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'ost.yaml')}"},
             {"gscam_config": "udpsrc port=5601 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
-            {"frame_id": f"/{AROV_NAME}_camera"}
+            {"frame_id": f"/{AROV_NAME}/camera"}
         ],
         remappings=[
             ('/arov/image_raw', '/arov/image_rect')

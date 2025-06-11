@@ -28,7 +28,7 @@ class MAVLink_Router(Node):
             ('rotation_limit', 500),                                        # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
             ('has_camera', True),                                           # Define whether or not the vehicle has a camera to deal with
             ('camera_transform', [0.15, 0.0, 0.0, -1.571, 0.0, -1.571]),    # (m, rad) x, y, z, roll, pitch, yaw initial transform for the camera position
-            ('gimbal_tilt_mapping', [1.571, -0.436, -0.5675, 0.5675])])     # (rad) Mapping from the values the gimbal system outputs at its limits (first two numbers) to the actual gimbal angles (last two)
+            ('gimbal_tilt_mapping', [-1.571, 0.436, 0.5675, -0.5675])])     # (rad) Mapping from the values the gimbal system outputs at its limits (first two numbers) to the actual gimbal angles (last two)
 
         self.vehicle = self.get_namespace().strip('/')
         self.master = mavutil.mavlink_connection(self.get_parameter('device').value)
@@ -74,8 +74,8 @@ class MAVLink_Router(Node):
             self.camera_gimbal_mapping = self.get_parameter('gimbal_tilt_mapping').value
 
             self.camera_transform = TransformStamped()
-            self.camera_transform.header.frame_id = f'{self.vehicle}/base_link'
-            self.camera_transform.child_frame_id = f'{self.vehicle}_camera'
+            self.camera_transform.header.frame_id = self.t.child_frame_id
+            self.camera_transform.child_frame_id = f'{self.vehicle}/camera'
 
             self.camera_transform.transform.translation.x = self.get_parameter('camera_transform').value[0]
             self.camera_transform.transform.translation.y = self.get_parameter('camera_transform').value[1]
@@ -349,7 +349,9 @@ class MAVLink_Router(Node):
         '''
         self.pose_publisher_.publish(self.odom)
         self.tf_broadcaster.sendTransform(self.t)
+
         if self.get_parameter('has_camera').value:
+            self.camera_transform.header.stamp = self.get_clock().now().to_msg()
             self.tf_broadcaster.sendTransform(self.camera_transform)
 
         self.imu_publisher_.publish(self.imu)
@@ -480,13 +482,11 @@ class MAVLink_Router(Node):
 
             elif msg_type == 'GIMBAL_DEVICE_ATTITUDE_STATUS':
                 if self.get_parameter('has_camera').value:
-                    # TODO Confirm order of rotations
-                    camera_rot = (self.camera_orientation *\
-                                Rotation.from_euler('xyz', [0.0,
-                                                            np.interp(Rotation.from_quat([*msg['q'][1:], msg['q'][0]]).as_euler('xyz')[1],
-                                                                        self.camera_gimbal_mapping[:1],
+                    camera_rot = (Rotation.from_euler('xyz', [0.0,
+                                                              np.interp(Rotation.from_quat([*msg['q'][1:], msg['q'][0]]).as_euler('xyz')[1],
+                                                                        self.camera_gimbal_mapping[:2],
                                                                         self.camera_gimbal_mapping[2:]),
-                                                            0.0])).as_quat()
+                                                              0.0]).inv() * self.camera_orientation).as_quat()
 
                     self.camera_transform.transform.rotation.x = camera_rot[0]
                     self.camera_transform.transform.rotation.y = camera_rot[1]
