@@ -241,6 +241,29 @@ class MAVLink_Router(Node):
             self.master.target_system,              # target_system
             self.master.target_component,           # target_component
             *rc_channel_values)                     # RC channel list, in microseconds.
+        
+    def set_mount_control(self, roll = 0.0, pitch = 0.0, yaw = 0.0):
+        '''
+        Set camera gimbal angle.  Implements the GIMBAL_DEVICE_SET_ATTITUDE command:
+        https://mavlink.io/en/messages/common.html#GIMBAL_DEVICE_SET_ATTITUDE
+
+        Args:
+            roll (float, optional): Gimbal roll angle in rad
+            pitch (float, optional): Gimbal pitch angle in rad
+            yaw (float, optional): Gimbal yaw angle in rad
+        '''
+        orientation = Rotation.from_euler('xyz', [roll, pitch, yaw]).as_quat()
+
+        self.master.mav.gimbal_device_set_attitude_send(
+            self.master.target_system,                                  # target_system
+            self.master.target_component,                               # target_component
+            mavutil.mavlink.GIMBAL_DEVICE_FLAGS_YAW_IN_VEHICLE_FRAME,   # Gimbal device flags
+            [orientation[3], orientation[:3]],                          # Orientation quaternion (scalar first)
+            float("nan"),                                               # Roll angular velocity
+            float("nan"),                                               # Pitch angular velocity
+            float("nan")                                                # Yaw angular velocity
+        )
+
 
     # Subscribers and Support
     def cmd_vel_to_pwm(self, msg):
