@@ -19,15 +19,17 @@ class MAVLink_Router(Node):
         super().__init__('mavlink_router')
         self.declare_parameters(namespace='',parameters=[
             ('device', 'udpin:localhost:14551'),
-            # ('vehicle_name', 'arov'),                       # Used for the topics and services that this node provides
-            ('rc_override_mapping', [4, 5, 2, 6, 7, 3]),    # Which RC channels (out of 0-7) to map x, y, z, roll, pitch, yaw commands to (assumes that mixing servo outputs occurs on the vehicle)
-                                                            #   Axes are in the vehicle frame (NED)
-                                                            #   Roll and pitch are not currently used
-            ('max_cmd_vel_linear', 1.0),                    # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
-            ('max_cmd_vel_angular', 1.0),                   # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
-            ('translation_limit', 500),                     # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
-            ('rotation_limit', 500)])                       # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
-        
+            ('rc_override_mapping', [4, 5, 2, 6, 7, 3]),                    # Which RC channels (out of 0-7) to map x, y, z, roll, pitch, yaw commands to (assumes that mixing servo outputs occurs on the vehicle)
+                                                                            #   Axes are in the vehicle frame (NED)
+                                                                            #   Roll and pitch are not currently used
+            ('max_cmd_vel_linear', 1.0),                                    # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('max_cmd_vel_angular', 1.0),                                   # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('translation_limit', 500),                                     # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
+            ('rotation_limit', 500),                                        # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
+            ('has_camera', True),                                           # Define whether or not the vehicle has a camera to deal with
+            ('camera_transform', [0.15, 0.0, 0.0, -1.571, 0.0, -1.571]),    # (m, rad) x, y, z, roll, pitch, yaw initial transform for the camera position
+            ('gimbal_tilt_mapping', [1.571, -0.436, -0.5675, 0.5675])])     # (rad) Mapping from the values the gimbal system outputs at its limits (first two numbers) to the actual gimbal angles (last two)
+
         self.vehicle = self.get_namespace().strip('/')
         self.master = mavutil.mavlink_connection(self.get_parameter('device').value)
         self.master.wait_heartbeat()
@@ -45,14 +47,12 @@ class MAVLink_Router(Node):
         self.cmd_vel_enabled = True
         self.rc_override_mapping = {'x': self.get_parameter('rc_override_mapping').value[0], 'y': self.get_parameter('rc_override_mapping').value[1], 'z': self.get_parameter('rc_override_mapping').value[2],
                                     'roll': self.get_parameter('rc_override_mapping').value[3], 'pitch': self.get_parameter('rc_override_mapping').value[4], 'yaw': self.get_parameter('rc_override_mapping').value[5]}
-        
-        self.camera_tilt = 0
-        self.camera_gimbal_range = np.deg2rad([-25, 90])
 
 
         # Define subscriptions to other ROS topics
         self.cmd_vel_sub = self.create_subscription(Twist, f'{self.get_namespace()}/cmd_vel', self.cmd_vel_callback, 10)
         self.cmd_vel_sub
+
 
         # Define service servers
         self.set_position_target_local_ned_srv = self.create_service(PositionTargetLocalNED, '/set_position_target_local_ned',
@@ -70,6 +70,26 @@ class MAVLink_Router(Node):
         self.t.header.frame_id = f'{self.vehicle}/odom'
         self.t.child_frame_id = f'{self.vehicle}/base_link'
 
+        if self.get_parameter('has_camera').value:
+            self.camera_gimbal_mapping = self.get_parameter('gimbal_tilt_mapping').value
+
+            self.camera_transform = TransformStamped()
+            self.camera_transform.header.frame_id = f'{self.vehicle}/base_link'
+            self.camera_transform.child_frame_id = f'{self.vehicle}_camera'
+
+            self.camera_transform.transform.translation.x = self.get_parameter('camera_transform').value[0]
+            self.camera_transform.transform.translation.y = self.get_parameter('camera_transform').value[1]
+            self.camera_transform.transform.translation.z = self.get_parameter('camera_transform').value[2]
+
+            self.camera_orientation = Rotation.from_euler('xyz', [self.get_parameter('camera_transform').value[3],
+                                                                  self.get_parameter('camera_transform').value[4],
+                                                                  self.get_parameter('camera_transform').value[5]])
+
+            self.camera_transform.transform.rotation.x = self.camera_orientation.as_quat()[0]
+            self.camera_transform.transform.rotation.y = self.camera_orientation.as_quat()[1]
+            self.camera_transform.transform.rotation.z = self.camera_orientation.as_quat()[2]
+            self.camera_transform.transform.rotation.w = self.camera_orientation.as_quat()[3]
+
         self.imu = Imu()
         self.imu.header.frame_id = f'/{self.vehicle}/base_link'
         
@@ -77,6 +97,7 @@ class MAVLink_Router(Node):
         self.gps.header.frame_id = f'/{self.vehicle}/world'
 
         self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, -90], degrees=True)
+
 
         # Define publishers for data from the vehicle to ROS
         self.pose_publisher_ = self.create_publisher(Odometry, f'{self.get_namespace()}/odom', 10)
@@ -305,6 +326,8 @@ class MAVLink_Router(Node):
         '''
         self.pose_publisher_.publish(self.odom)
         self.tf_broadcaster.sendTransform(self.t)
+        if self.get_parameter('has_camera').value:
+            self.tf_broadcaster.sendTransform(self.camera_transform)
 
         self.imu_publisher_.publish(self.imu)
         self.gps_publisher_.publish(self.gps)    
@@ -432,12 +455,20 @@ class MAVLink_Router(Node):
                 self.gps.longitude = msg['lon'] / (10**7)
                 self.gps.altitude = msg['alt'] / 1000.0
 
-            # elif msg_type == 'SERVO_OUTPUT_RAW':
-            #     self.get_logger().info(f'{msg_type}, {msg['servo10_raw']}')
-
             elif msg_type == 'GIMBAL_DEVICE_ATTITUDE_STATUS':
-                self.camera_tilt = Rotation.from_quat([*msg['q'][1:], msg['q'][0]]).as_euler('xyz')[1]
-                self.get_logger().info(f'{self.camera_tilt}')
+                if self.get_parameter('has_camera').value:
+                    # TODO Confirm order of rotations
+                    camera_rot = (self.camera_orientation *\
+                                Rotation.from_euler('xyz', [0.0,
+                                                            np.interp(Rotation.from_quat([*msg['q'][1:], msg['q'][0]]).as_euler('xyz')[1],
+                                                                        self.camera_gimbal_mapping[:1],
+                                                                        self.camera_gimbal_mapping[2:]),
+                                                            0.0])).as_quat()
+
+                    self.camera_transform.transform.rotation.x = camera_rot[0]
+                    self.camera_transform.transform.rotation.y = camera_rot[1]
+                    self.camera_transform.transform.rotation.z = camera_rot[2]
+                    self.camera_transform.transform.rotation.w = camera_rot[3]
             
             # else:
             #     self.get_logger().info(f'{msg_type}, {msg}')

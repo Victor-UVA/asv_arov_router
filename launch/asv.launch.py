@@ -33,7 +33,8 @@ def generate_launch_description():
         parameters=[
             {'device': 'udpin:localhost:14553'},
             {'vehicle_name': ASV_NAME},
-            {'rc_override_mapping': [0, 2, 3, 4, 5, 1]}
+            {'rc_override_mapping': [0, 2, 3, 4, 5, 1]},
+            {'has_camera': False}
         ]
     )
 
@@ -101,21 +102,21 @@ def generate_launch_description():
     )
 
     # tf2 static transforms
-    bluerov_camera_transform_node = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="bluerov_camera_transform",
-        arguments=[
-            '--x', '0.15',
-            '--y', '0.0',
-            '--z', '0.0',
-            '--yaw', '-1.571',
-            '--pitch', '0.0',
-            '--roll', '-1.571',
-            '--frame-id', f"/{AROV_NAME}/base_link",
-            '--child-frame-id', f"/{AROV_NAME}_camera"
-        ]
-    )
+    # bluerov_camera_transform_node = Node(
+    #     package="tf2_ros",
+    #     executable="static_transform_publisher",
+    #     name="bluerov_camera_transform",
+    #     arguments=[
+    #         '--x', '0.15',
+    #         '--y', '0.0',
+    #         '--z', '0.0',
+    #         '--yaw', '-1.571',
+    #         '--pitch', '0.0',
+    #         '--roll', '-1.571',
+    #         '--frame-id', f"/{AROV_NAME}/base_link",
+    #         '--child-frame-id', f"/{AROV_NAME}_camera"
+    #     ]
+    # )
 
     maddy_odom_map_transform_node = Node(
         package="tf2_ros",
@@ -185,7 +186,7 @@ def generate_launch_description():
     ld.add_action(video_recorder_node)
 
     # tf2 static transforms
-    ld.add_action(bluerov_camera_transform_node)
+    # ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
 
     return ld
