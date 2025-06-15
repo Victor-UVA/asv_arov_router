@@ -12,7 +12,7 @@ case $NETWORK in
 
   VICTOR)
     GATE=172.16.0
-    ASV=$GATE.17 # TODO get the right address
+    ASV=$GATE.18
     ;;
 
   PORTABLE)
