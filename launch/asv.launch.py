@@ -19,7 +19,7 @@ def generate_launch_description():
         name="arov_connection",
         namespace=f'{AROV_NAME}',
         parameters=[
-            {'device': 'udpin:localhost:14551'},
+            {'device': 'udpin:localhost:14552'},
             {'vehicle_name': AROV_NAME},
             {'rc_override_mapping': [4, 5, 2, 6, 7, 3]}
         ]
@@ -31,7 +31,7 @@ def generate_launch_description():
         name="asv_connection",
         namespace=f'{ASV_NAME}',
         parameters=[
-            {'device': 'udpin:localhost:14553'},
+            {'device': 'udpin:localhost:14555'},
             {'vehicle_name': ASV_NAME},
             {'rc_override_mapping': [0, 2, 3, 4, 5, 1]},
             {'has_camera': False}
