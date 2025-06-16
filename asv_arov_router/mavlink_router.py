@@ -66,6 +66,8 @@ class MAVLink_Router(Node):
         self.odom.header.frame_id = f'{self.vehicle}/odom'
         self.odom.child_frame_id = f'{self.vehicle}/base_link'
 
+        self.odom_offset = None
+
         self.t = TransformStamped()
         self.t.header.frame_id = f'{self.vehicle}/odom'
         self.t.child_frame_id = f'{self.vehicle}/base_link'
@@ -438,8 +440,13 @@ class MAVLink_Router(Node):
                 self.t.transform.translation.z = position_enu[2]
 
             elif msg_type == 'ATTITUDE':
+                if self.odom_offset is None:
+                    self.odom_offset = [msg['roll'], msg['pitch'], msg['yaw']]
+
                 # Rotated into front, left, up frame
-                orientation_ned = Rotation.from_euler('xyz', [msg['roll'], msg['pitch'], msg['yaw']], degrees=False)
+                orientation_ned = Rotation.from_euler('xyz', [msg['roll'] - self.odom_offset[0],
+                                                              msg['pitch']  - self.odom_offset[1],
+                                                              msg['yaw'] - self.odom_offset[2]], degrees=False)
                 ned_to_flu = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
                 orientation_flu = (ned_to_flu.inv() * orientation_ned * ned_to_flu).as_quat()
                 
