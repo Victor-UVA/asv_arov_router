@@ -1,7 +1,7 @@
 static_offset: # Leaves the tag facing toward and offset from the OptiTrack origin
   x: 0
   y: 0
-  z: 0
+  z: -0.5
   roll: 1.571
   pitch: 0.0
   yaw: -1.571
@@ -14,7 +14,7 @@ apriltags:
       y: 0.285
       z: 0
       roll: 0
-      pitch: -0.05
+      pitch: 0
       yaw: 0
 
     - id: 3
@@ -22,7 +22,7 @@ apriltags:
       y: 0
       z: 0
       roll: 0
-      pitch: -0.05
+      pitch: 0
       yaw: 0
 
     - id: 2
@@ -30,7 +30,7 @@ apriltags:
       y: -0.305
       z: 0
       roll: 0
-      pitch: -0.05
+      pitch: 0
       yaw: 0
 
     - id: 4
