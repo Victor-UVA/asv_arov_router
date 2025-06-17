@@ -284,9 +284,9 @@ class MAVLink_Router(Node):
         omega_z = max(-self.MAX_OMEGA, min(self.MAX_OMEGA, omega_z))
 
         x = 1500 + int(self.VEL_TO_CMD * vel_x)
-        y = 1500 + int(self.VEL_TO_CMD * vel_y)
+        y = 1500 + int(self.VEL_TO_CMD * -vel_y)
         z = 1500 + int(self.VEL_TO_CMD * vel_z)
-        yaw = 1500 + int(self.OMEGA_TO_CMD * omega_z)
+        yaw = 1500 + int(self.OMEGA_TO_CMD * -omega_z)
 
         return x, y, z, yaw
     
