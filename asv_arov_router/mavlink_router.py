@@ -279,8 +279,8 @@ class MAVLink_Router(Node):
         omega_z = msg.angular.z
 
         vel_x = max(-self.MAX_VEL, min(self.MAX_VEL, vel_x))
-        vel_y = max(-self.MAX_VEL, min(self.MAX_VEL, -vel_y))
-        vel_z = max(-self.MAX_VEL, min(self.MAX_VEL, -vel_z))
+        vel_y = max(-self.MAX_VEL, min(self.MAX_VEL, vel_y))
+        vel_z = max(-self.MAX_VEL, min(self.MAX_VEL, vel_z))
         omega_z = max(-self.MAX_OMEGA, min(self.MAX_OMEGA, omega_z))
 
         x = 1500 + int(self.VEL_TO_CMD * vel_x)
