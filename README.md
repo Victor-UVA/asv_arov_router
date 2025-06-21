@@ -102,7 +102,7 @@ The gscam2 node needs the camera calibration data from the BlueROV's camera so t
 
 # Recording Data
 ## ROS Bag
-- Current command to record all topics except for the camera feed (to reduce bag size): ```ros2 bag record /arov/cmd_vel /arov/gps /arov/imu /arov/odom /asv/cmd_vel /asv/gps /asv/imu /asv/odom /asv/pose /camera_info /detections /rosout /tf /tf_static -o {BAG_NAME}```
+- Current command to record all topics except for the camera feed (to reduce bag size): ```ros2 bag record /arov/cmd_vel /arov/gps /arov/imu /arov/odom /asv/cmd_vel /asv/gps /asv/imu /asv/odom /asv/pose /camera_info /detections /arov/detections /rosout /tf /tf_static -o {BAG_NAME}```
     - Run this from ```ros2_ws/data_log/ros_bags```
 
 ```ssh maddy@192.168.1.4```

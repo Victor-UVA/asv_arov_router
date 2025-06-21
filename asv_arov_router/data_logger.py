@@ -25,6 +25,12 @@ class Data_Logger(Node):
         self.asv = self.get_parameter('asv_name').value
         self.arov = self.get_parameter('arov_name').value
 
+        # self.fields = ['timestep','uuv_x','uuv_y','uuv_z','uuv_psi','usv_x','usv_y','usv_psi','gps_x','gps_y','uuv_compass','usv_compass',
+        #                'uuv_gyro','usv_gyro', 'uuv_acc_x', 'uuv_acc_y', 'uuv_acc_z', 'apriltag_x', 'apriltag_y', 'uuv_u_x', 'uuv_u_y', 'uuv_u_z', 'uuv_u_yaw']
+        # with open(self.LOG_FILE, 'w') as csv_file:
+        #     csv_writer =csv.DictWriter(csv_file, fieldnames=self.fields)
+        #     csv_writer.writeheader()
+
         self.arov_accel = [0.0,0.0,0.0]
         self.arov_gyro_rates = [0.0,0.0,0.0]
         self.arov_pose_estimate = [0.0,0.0,0.0]
@@ -146,6 +152,36 @@ class Data_Logger(Node):
         self.asv_yaw_estimate = Rotation.from_quat(rot).as_euler('xyz', degrees=True)[2]
 
     def log_data(self):
+        # with open(self.LOG_FILE, 'a') as csv_file:
+        #     csv_writer =csv.DictWriter(csv_file, fieldnames=self.fields)
+        #     info = {
+        #         'timestep': str(self.get_clock().now().seconds_nanoseconds()[0]) + '.' + str(self.get_clock().now().seconds_nanoseconds()[1]),
+        #         'uuv_x': self.bluerov_pose_estimate[0],
+        #         'uuv_y': self.bluerov_pose_estimate[1],
+        #         'uuv_z': self.bluerov_pose_estimate[2],
+        #         'uuv_psi': self.bluerov_yaw_estimate,
+        #         'usv_x': self.maddy_pose_estimate[0],
+        #         'usv_y': self.maddy_pose_estimate[1],
+        #         'usv_psi': self.maddy_yaw_estimate,
+        #         'gps_x': 0,
+        #         'gps_y': 0,
+        #         'uuv_compass': self.bluerov_yaw_estimate,
+        #         'usv_compass': self.maddy_yaw_estimate,
+        #         'uuv_gyro': self.bluerov_gyro_rates[2],
+        #         'usv_gyro': self.maddy_yaw_rate,
+        #         'uuv_acc_x': self.bluerov_accel[0],
+        #         'uuv_acc_y': self.bluerov_accel[1],
+        #         'uuv_acc_z': self.bluerov_accel[2],
+        #         'apriltag_x': self.apriltag_pose[0],
+        #         'apriltag_y': self.apriltag_pose[1],
+        #         'uuv_u_x': self.bluerov_control.linear.x,
+        #         'uuv_u_y': self.bluerov_control.linear.y,
+        #         'uuv_u_z': self.bluerov_control.linear.z,
+        #         'uuv_u_yaw': self.bluerov_control.angular.z
+        #     }
+            
+        #     csv_writer.writerow(info)
+        
         json_info = {
             'timestep': str(self.get_clock().now().seconds_nanoseconds()[0]) + '.' + str(self.get_clock().now().seconds_nanoseconds()[1]),
             'uuv_x': self.arov_pose_estimate[0],

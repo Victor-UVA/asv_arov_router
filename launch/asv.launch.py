@@ -134,6 +134,22 @@ def generate_launch_description():
         ]
     )
 
+    arov_odom_map_transform_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="arov_odom_map_transform",
+        arguments=[
+            '--x', '0.0',
+            '--y', '0.0',
+            '--z', '0.0',
+            '--yaw', '0.0',
+            '--pitch', '0.0',
+            '--roll', '0.0',
+            '--frame-id', "/map",
+            '--child-frame-id', f"/{AROV_NAME}/odom"
+        ]
+    )
+
     apriltags = os.path.join(
         get_package_share_directory('asv_arov_router'),
         'config',
@@ -188,5 +204,6 @@ def generate_launch_description():
     # tf2 static transforms
     # ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
+    # ld.add_action(arov_odom_map_transform_node)
 
     return ld

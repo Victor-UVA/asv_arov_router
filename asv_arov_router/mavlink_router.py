@@ -22,8 +22,8 @@ class MAVLink_Router(Node):
             ('rc_override_mapping', [4, 5, 2, 6, 7, 3]),                    # Which RC channels (out of 0-7) to map x, y, z, roll, pitch, yaw commands to (assumes that mixing servo outputs occurs on the vehicle)
                                                                             #   Axes are in the vehicle frame (NED)
                                                                             #   Roll and pitch are not currently used
-            ('max_cmd_vel_linear', 1.0),                                    # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
-            ('max_cmd_vel_angular', 1.0),                                   # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('max_cmd_vel_linear', 0.3),                                    # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
+            ('max_cmd_vel_angular', 0.5),                                   # Value for cmd_vel messages sent to this vehicle that map to the maximum PWM output
             ('translation_limit', 500),                                     # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
             ('rotation_limit', 500),                                        # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
             ('has_camera', True),                                           # Define whether or not the vehicle has a camera to deal with
@@ -47,6 +47,8 @@ class MAVLink_Router(Node):
         self.cmd_vel_enabled = True
         self.rc_override_mapping = {'x': self.get_parameter('rc_override_mapping').value[0], 'y': self.get_parameter('rc_override_mapping').value[1], 'z': self.get_parameter('rc_override_mapping').value[2],
                                     'roll': self.get_parameter('rc_override_mapping').value[3], 'pitch': self.get_parameter('rc_override_mapping').value[4], 'yaw': self.get_parameter('rc_override_mapping').value[5]}
+        
+        self.cmd_vel = Twist()
 
 
         # Define subscriptions to other ROS topics
@@ -111,9 +113,11 @@ class MAVLink_Router(Node):
         # Create timers to aquire and publish data
         publish_timer_period = 0.02 # seconds
         data_timer_period = 0.005
+        rc_cmd_period = 0.01
 
         self.pub_timer = self.create_timer(publish_timer_period, self.data_pub)
         self.data_timer = self.create_timer(data_timer_period, self.parse_vehicle_data)
+        self.rc_cmd_timer = self.create_timer(rc_cmd_period, self.cmd_vel_to_pwm)
 
     # Commands
     def arm_disarm(self, set_value = None):
@@ -268,27 +272,33 @@ class MAVLink_Router(Node):
 
 
     # Subscribers and Support
-    def cmd_vel_to_pwm(self, msg):
+    def cmd_vel_to_pwm(self):
         '''
         Convert a ROS cmd_vel message into PWM values
 
         Args:
             msg (Twist): Velocity command to convert to PWM
         '''
-        vel_x, vel_y, vel_z = msg.linear.x, msg.linear.y, msg.linear.z
-        omega_z = msg.angular.z
+        if self.cmd_vel_enabled and not (self.cmd_vel.linear.x == 0 and self.cmd_vel.linear.y == 0 and self.cmd_vel.linear.z == 0 and \
+                                         self.cmd_vel.angular.x == 0 and self.cmd_vel.angular.y == 0 and self.cmd_vel.angular.z == 0):
+            vel_x, vel_y, vel_z = self.cmd_vel.linear.x, self.cmd_vel.linear.y, self.cmd_vel.linear.z
+            omega_z = self.cmd_vel.angular.z
 
-        vel_x = max(-self.MAX_VEL, min(self.MAX_VEL, vel_x))
-        vel_y = max(-self.MAX_VEL, min(self.MAX_VEL, vel_y))
-        vel_z = max(-self.MAX_VEL, min(self.MAX_VEL, vel_z))
-        omega_z = max(-self.MAX_OMEGA, min(self.MAX_OMEGA, omega_z))
+            vel_x = max(-self.MAX_VEL, min(self.MAX_VEL, vel_x))
+            vel_y = max(-self.MAX_VEL, min(self.MAX_VEL, vel_y))
+            vel_z = max(-self.MAX_VEL, min(self.MAX_VEL, vel_z))
+            omega_z = max(-self.MAX_OMEGA, min(self.MAX_OMEGA, omega_z))
 
-        x = 1500 + int(self.VEL_TO_CMD * vel_x)
-        y = 1500 + int(self.VEL_TO_CMD * -vel_y)
-        z = 1500 + int(self.VEL_TO_CMD * vel_z)
-        yaw = 1500 + int(self.OMEGA_TO_CMD * -omega_z)
+            x = 1500 + int(self.VEL_TO_CMD * vel_x)
+            y = 1500 + int(self.VEL_TO_CMD * -vel_y)
+            z = 1500 + int(self.VEL_TO_CMD * vel_z)
+            yaw = 1500 + int(self.OMEGA_TO_CMD * -omega_z)
 
-        return x, y, z, yaw
+            self.set_cmd_pwm(x, y, z, yaw)
+        else:
+            return
+
+        # return x, y, z, yaw
     
     def cmd_vel_callback(self, msg):
         '''
@@ -297,10 +307,8 @@ class MAVLink_Router(Node):
         Args:
             msg (Twist): Velocity command to convert to PWM
         '''
-        if self.cmd_vel_enabled:
-            self.set_cmd_pwm(*self.cmd_vel_to_pwm(msg))
-        else:
-            return
+        self.cmd_vel = msg
+        return
         
     # Services
     def position_target_local_ned_callback(self, request: PositionTargetLocalNED.Request, response: PositionTargetLocalNED.Response):
