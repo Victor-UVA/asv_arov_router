@@ -9,7 +9,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu, NavSatFix
 from tf2_ros import TransformBroadcaster
 
-from asv_arov_interfaces.srv import PositionTargetLocalNED, SetMAVMode, SetArmDisarm
+from asv_arov_interfaces.srv import PositionTargetLocalNED, SetMAVMode, SetArmDisarm, SetPump, SetCenterCamera
 
 class MAVLink_Router(Node):
     '''
@@ -18,7 +18,7 @@ class MAVLink_Router(Node):
     def __init__(self):
         super().__init__('mavlink_router')
         self.declare_parameters(namespace='',parameters=[
-            ('device', 'udpin:localhost:14551'),
+            ('device', 'udpin:0.0.0.0:14550'),
             ('rc_override_mapping', [4, 5, 2, 6, 7, 3]),                    # Which RC channels (out of 0-7) to map x, y, z, roll, pitch, yaw commands to (assumes that mixing servo outputs occurs on the vehicle)
                                                                             #   Axes are in the vehicle frame (NED)
                                                                             #   Roll and pitch are not currently used
@@ -27,6 +27,7 @@ class MAVLink_Router(Node):
             ('translation_limit', 500),                                     # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
             ('rotation_limit', 500),                                        # Max PWM difference to send to the vehicle, typical range 1000 - 2000 with 1500 as centered
             ('has_camera', True),                                           # Define whether or not the vehicle has a camera to deal with
+            ('camera_center_pwm', 1500),
             ('camera_transform', [0.15, 0.0, 0.0, -1.571, 0.0, -1.571]),    # (m, rad) x, y, z, roll, pitch, yaw initial transform for the camera position
             ('gimbal_tilt_mapping', [-1.571, 0.436, 0.5675, -0.5675])])     # (rad) Mapping from the values the gimbal system outputs at its limits (first two numbers) to the actual gimbal angles (last two)
 
@@ -61,6 +62,7 @@ class MAVLink_Router(Node):
                                                                      self.position_target_local_ned_callback)
         self.set_mode_srv = self.create_service(SetMAVMode, '/set_mav_mode', self.set_mode_callback)
         self.set_arm_disarm_srv = self.create_service(SetArmDisarm, '/set_arm_disarm', self.set_arm_disarm_callback)
+        self.set_pump_srv = self.create_service(SetPump, '/set_pump', self.set_pump_callback)
 
 
         # Define variables to store the data from the vehicle between publishing it
@@ -75,6 +77,7 @@ class MAVLink_Router(Node):
         self.t.child_frame_id = f'{self.vehicle}/base_link'
 
         if self.get_parameter('has_camera').value:
+            self.set_center_camera_srv = self.create_service(SetCenterCamera, '/set_center_camera', self.set_center_camera_callback)
             self.camera_gimbal_mapping = self.get_parameter('gimbal_tilt_mapping').value
 
             self.camera_transform = TransformStamped()
@@ -227,7 +230,7 @@ class MAVLink_Router(Node):
             param[6],                               # body yaw rate
             param[7])                               # thrust
 
-    def set_cmd_pwm(self, pwm_linear_x=1500, pwm_linear_y=1500, pwm_linear_z=1500, pwm_angular_z=1500):
+    def set_cmd_pwm(self, pwm_linear_x=None, pwm_linear_y=None, pwm_linear_z=None, pwm_angular_z=None, aux=[]):
         '''
         Send commands mimicing joystick inputs.
 
@@ -236,13 +239,16 @@ class MAVLink_Router(Node):
             pwm_linear_y (int, optional): Rigth / left
             pwm_linear_z (int, optional): Up / down
             pwm_angular_yaw (int, optional): Clockwise / counter-clockwise
+            aux (int, optional): pwm value to output on aux outputs (1 to 6, channels 9 to 14), pass 65535 for channels to ignore
         '''
 
-        rc_channel_values = [65535 for _ in range(8)]
-        rc_channel_values[self.rc_override_mapping['x']] = pwm_linear_x
-        rc_channel_values[self.rc_override_mapping['y']] = pwm_linear_y
-        rc_channel_values[self.rc_override_mapping['z']] = pwm_linear_z
-        rc_channel_values[self.rc_override_mapping['yaw']] = pwm_angular_z
+        rc_channel_values = [65535 for _ in range(14)]
+        if pwm_linear_x is not None : rc_channel_values[self.rc_override_mapping['x']] = pwm_linear_x
+        if pwm_linear_y is not None : rc_channel_values[self.rc_override_mapping['y']] = pwm_linear_y
+        if pwm_linear_z is not None : rc_channel_values[self.rc_override_mapping['z']] = pwm_linear_z
+        if pwm_angular_z is not None : rc_channel_values[self.rc_override_mapping['yaw']] = pwm_angular_z
+        if len(aux) == 6 : rc_channel_values[8:13] = aux
+
         self.master.mav.rc_channels_override_send(
             self.master.target_system,              # target_system
             self.master.target_component,           # target_component
@@ -268,6 +274,26 @@ class MAVLink_Router(Node):
             float("nan"),                                               # Roll angular velocity
             float("nan"),                                               # Pitch angular velocity
             float("nan")                                                # Yaw angular velocity
+        )
+
+    def set_servo_cmd(self, servo: int, pwm: int) :
+        '''
+        Set a servo output to a given PWM value.  Implements the MAV_CMD_DO_SET_SERVO command:
+        https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_SERVO
+
+        Args:
+            servo (int): The servo to set the output of ()
+            pwm (int): 
+        '''
+
+        self.master.mav.command_long_send(
+            self.master.target_system,                                  # target_system
+            self.master.target_component,                               # target_component
+            mavutil.mavlink.MAV_CMD_DO_SET_SERVO,                       # servo command
+            0,
+            servo,
+            pwm,
+            0, 0, 0, 0, 0
         )
 
 
@@ -350,6 +376,23 @@ class MAVLink_Router(Node):
         except:
             response.arm_state_set = False
             
+        return response
+    
+    def set_pump_callback(self, request: SetPump.Request, response: SetPump.Response) :
+        # TODO Fix ensuring the ESC is callibrated
+        if request.set_pump :
+            self.set_servo_cmd(11, 1100)
+            response.pump_state = True
+        else :
+            self.set_servo_cmd(11, 1500)
+            response.pump_state = False
+        
+        return response
+    
+    def set_center_camera_callback(self, request: SetCenterCamera.Request, response: SetCenterCamera.Response) :
+        self.set_mount_control()
+        response.camera_centered = True
+
         return response
 
     # Publishers
