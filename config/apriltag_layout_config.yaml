@@ -1,58 +1,74 @@
 static_offset: # Leaves the tag facing toward and offset from the OptiTrack origin
-  x: 0
-  y: 0
-  z: -0.5
+  x: -4.77
+  y: 2.558
+  z: -0.4725
   roll: 1.571
   pitch: 0.0
-  yaw: -1.571
+  yaw: 0.0
 
 apriltags:
   - family: 36h11
     tags:
-    - id: 0
-      x: 2.735
-      y: 0.285
-      z: 0
+    - id: 51
+      x: 0.914
+      y: 2.438
+      z: -1.19
       roll: 0
       pitch: 0
       yaw: 0
 
-    - id: 3
-      x: 2.735
-      y: 0
-      z: 0
+    - id: 50
+      x: 2.743
+      y: 2.438
+      z: -1.52
       roll: 0
       pitch: 0
       yaw: 0
 
-    - id: 2
-      x: 2.735
-      y: -0.305
-      z: 0
+    - id: 49
+      x: 4.572
+      y: 2.438
+      z: -1.5
       roll: 0
       pitch: 0
       yaw: 0
 
-    - id: 4
-      x: -2.735
-      y: -0.305
-      z: 0
+    - id: 47
+      x: 6.401
+      y: 2.438
+      z: -1.47
       roll: 0
       pitch: 0
-      yaw: -3.141
+      yaw: 0
 
-    - id: 5
-      x: -2.735
-      y: 0
-      z: 0
+    - id: 46
+      x: 8.229
+      y: 2.438
+      z: -1.55
       roll: 0
       pitch: 0
-      yaw: -3.141
+      yaw: 0
 
-    - id: 6
-      x: -2.735
-      y: 0.285
-      z: 0
+    - id: 45
+      x: 10.058
+      y: 2.438
+      z: -1.57
       roll: 0
       pitch: 0
-      yaw: -3.141
+      yaw: 0
+
+    - id: 19
+      x: 5.25
+      y: -2.358
+      z: -0.95
+      roll: 0
+      pitch: 0
+      yaw: 2.792
+
+    - id: 20
+      x: 3.5
+      y: -1.623
+      z: -0.95
+      roll: 0
+      pitch: 0
+      yaw: 3.490

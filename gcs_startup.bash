@@ -6,7 +6,7 @@ echo "Today is " `date`
 cd ~/ros2_ws
 source install/setup.bash
 
-NETWORK=VICTOR
+NETWORK=PORTABLE
 
 case $NETWORK in
 
@@ -19,7 +19,7 @@ case $NETWORK in
   PORTABLE)
     GATE=192.168.1
     ASV=$GATE.4
-    OPTI=$GATE.22
+    OPTI=$GATE.2
     ;;
 esac
 

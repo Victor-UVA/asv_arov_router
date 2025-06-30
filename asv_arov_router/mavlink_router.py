@@ -103,7 +103,7 @@ class MAVLink_Router(Node):
         self.gps = NavSatFix()
         self.gps.header.frame_id = f'/{self.vehicle}/world'
 
-        self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, -90], degrees=True)
+        self.ned_to_enu = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
 
 
         # Define publishers for data from the vehicle to ROS
@@ -491,13 +491,13 @@ class MAVLink_Router(Node):
                 self.t.transform.translation.z = position_enu[2]
 
             elif msg_type == 'ATTITUDE':
-                if self.odom_offset is None:
-                    self.odom_offset = [msg['roll'], msg['pitch'], msg['yaw']]
+                # if self.odom_offset is None:
+                #     self.odom_offset = [msg['roll'], msg['pitch'], msg['yaw']]
 
                 # Rotated into front, left, up frame
-                orientation_ned = Rotation.from_euler('xyz', [msg['roll'] - self.odom_offset[0],
-                                                              msg['pitch']  - self.odom_offset[1],
-                                                              msg['yaw'] - self.odom_offset[2]], degrees=False)
+                orientation_ned = Rotation.from_euler('xyz', [msg['roll'],
+                                                              msg['pitch'],
+                                                              msg['yaw']], degrees=False)
                 ned_to_flu = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
                 orientation_flu = (ned_to_flu.inv() * orientation_ned * ned_to_flu).as_quat()
                 

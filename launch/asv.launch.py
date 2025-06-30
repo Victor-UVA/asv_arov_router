@@ -21,7 +21,9 @@ def generate_launch_description():
         parameters=[
             {'device': 'udpin:localhost:14552'},
             {'vehicle_name': AROV_NAME},
-            {'rc_override_mapping': [4, 5, 2, 6, 7, 3]}
+            {'rc_override_mapping': [4, 5, 2, 6, 7, 3]},
+            {'rotation_limit': 250},
+            {'translation_limit': 250}
         ]
     )
 
@@ -34,7 +36,9 @@ def generate_launch_description():
             {'device': 'udpin:localhost:14555'},
             {'vehicle_name': ASV_NAME},
             {'rc_override_mapping': [0, 2, 3, 4, 5, 1]},
-            {'has_camera': False}
+            {'has_camera': False},
+            {'rotation_limit': 150},
+            {'translation_limit': 150}
         ]
     )
 
@@ -45,17 +49,6 @@ def generate_launch_description():
         parameters=[
             {'arov_name': AROV_NAME},
             {'asv_name': ASV_NAME}
-        ]
-    )
-
-    arov_ekf_global_node = Node(
-        package="asv_arov_localization",
-        executable="arov_ekf_global",
-        name="arov_ekf_global",
-        namespace=f'{AROV_NAME}',
-        parameters=[
-            {'~vehicle_name': AROV_NAME},
-            {'~ros_bag': False}
         ]
     )
 
@@ -156,7 +149,7 @@ def generate_launch_description():
         'apriltag_layout_config.yaml'
     )
 
-    # apriltag_transform_nodes = []
+    fixed_apriltags = []
     with open(apriltags) as stream:
         try:
             apriltags_layout = yaml.safe_load(stream)
@@ -186,13 +179,24 @@ def generate_launch_description():
                             '--child-frame-id', f"/tag{family['family']}:{tag['id']}_true"
                         ]
                     ))
+                    fixed_apriltags.append(f'tag{family['family']}:{tag['id']}')
 
         except yaml.YAMLError as exc:
             print(exc)
 
+    arov_ekf_global_node = Node(
+        package="asv_arov_localization",
+        executable="arov_ekf_global",
+        name="arov_ekf_global",
+        namespace=f'{AROV_NAME}',
+        parameters=[
+            {'~vehicle_name': AROV_NAME},
+            {'~ros_bag': False},
+            {'~fixed_tags': fixed_apriltags}
+        ]
+    )
+
     # End tf2 static transforms
-
-
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
     ld.add_action(arov_ekf_global_node)
