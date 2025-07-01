@@ -9,77 +9,77 @@ static_offset: # Leaves the tag facing toward and offset from the OptiTrack orig
 apriltags:
   - family: 36h11
     tags:
-    - id: 51
-      x: 0.914
-      y: 2.438
-      z: -1.19
-      roll: 0
-      pitch: 0
-      yaw: 0
-      frame_id: '/map'
+    # - id: 51
+    #   x: 0.914
+    #   y: 2.438
+    #   z: -1.19
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 0
+    #   frame_id: '/map'
 
-    - id: 50
-      x: 2.743
-      y: 2.438
-      z: -1.52
-      roll: 0
-      pitch: 0
-      yaw: 0
-      frame_id: '/map'
+    # - id: 50
+    #   x: 2.743
+    #   y: 2.438
+    #   z: -1.52
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 0
+    #   frame_id: '/map'
 
-    - id: 49
-      x: 4.572
-      y: 2.438
-      z: -1.5
-      roll: 0
-      pitch: 0
-      yaw: 0
-      frame_id: '/map'
+    # - id: 49
+    #   x: 4.572
+    #   y: 2.438
+    #   z: -1.5
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 0
+    #   frame_id: '/map'
 
-    - id: 47
-      x: 6.401
-      y: 2.438
-      z: -1.47
-      roll: 0
-      pitch: 0
-      yaw: 0
-      frame_id: '/map'
+    # - id: 47
+    #   x: 6.401
+    #   y: 2.438
+    #   z: -1.47
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 0
+    #   frame_id: '/map'
 
-    - id: 46
-      x: 8.229
-      y: 2.438
-      z: -1.55
-      roll: 0
-      pitch: 0
-      yaw: 0
-      frame_id: '/map'
+    # - id: 46
+    #   x: 8.229
+    #   y: 2.438
+    #   z: -1.55
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 0
+    #   frame_id: '/map'
 
-    - id: 45
-      x: 10.058
-      y: 2.438
-      z: -1.57
-      roll: 0
-      pitch: 0
-      yaw: 0
-      frame_id: '/map'
+    # - id: 45
+    #   x: 10.058
+    #   y: 2.438
+    #   z: -1.57
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 0
+    #   frame_id: '/map'
 
-    - id: 19
-      x: 5.25
-      y: -2.358
-      z: -0.95
-      roll: 0
-      pitch: 0
-      yaw: 2.792
-      frame_id: '/map'
+    # - id: 19
+    #   x: 5.25
+    #   y: -2.358
+    #   z: -0.95
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 2.792
+    #   frame_id: '/map'
 
-    - id: 20
-      x: 3.5
-      y: -1.623
-      z: -0.95
-      roll: 0
-      pitch: 0
-      yaw: 3.490
-      frame_id: '/map'
+    # - id: 20
+    #   x: 3.5
+    #   y: -1.623
+    #   z: -0.95
+    #   roll: 0
+    #   pitch: 0
+    #   yaw: 3.490
+    #   frame_id: '/map'
 
     - id: 7
       x: 0

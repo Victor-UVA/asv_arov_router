@@ -52,7 +52,47 @@ def generate_launch_description():
         ]
     )
 
-    gscam2_node = Node(
+    # AROV Camera
+    arov_cam_apriltag_config = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'apriltag_node_config.yaml'
+    )
+
+    arov_gscam2_node = Node(
+        package="gscam2",
+        executable="gscam_main",
+        name="gscam",
+        namespace=f'{AROV_NAME}',
+        parameters=[
+            {"camera_name": "narrow_stereo"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'ost.yaml')}"},
+            {"gscam_config": "udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
+            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
+            {"frame_id": f"/{AROV_NAME}/camera"}
+        ],
+        remappings=[
+            (f'/{AROV_NAME}/image_raw', f'/{AROV_NAME}/image_rect')
+        ]
+    )
+
+    arov_apriltag_node = Node(
+        package="apriltag_ros",
+        executable="apriltag_node",
+        name="apriltag",
+        namespace=f'{AROV_NAME}',
+        parameters=[
+            arov_cam_apriltag_config
+        ],
+        remappings=[
+            ('/apriltag/image_rect',f'/{AROV_NAME}/image_rect'),
+            ('/camera/camera_info',f'/{AROV_NAME}/camera_info')
+        ]
+    )
+
+    # External Cameras
+
+    cam1_gscam2_node = Node(
         package="gscam2",
         executable="gscam_main",
         name="gscam",
@@ -63,14 +103,14 @@ def generate_launch_description():
             # {"gscam_config": "udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
             # {"frame_id": f"/{AROV_NAME}/camera"}
             {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
-            {"frame_id": 'map'}
+            {"frame_id": '/cam1/camera'}
         ],
         remappings=[
             ('/cam1/image_raw', '/cam1/image_rect')
         ]
     )
 
-    config = os.path.join(
+    cam1_apriltag_config = os.path.join(
         get_package_share_directory('asv_arov_router'),
         'config',
         'apriltag_node_config.yaml'
@@ -82,9 +122,7 @@ def generate_launch_description():
         name="apriltag",
         namespace=f'cam1',
         parameters=[
-            config
-            # {"image_rect": "/cam1/image_rect"},
-            # {"camera_info": "/cam1/camera_info"}
+            cam1_apriltag_config
         ],
         remappings=[
             ('/apriltag/image_rect','/cam1/image_rect'),
@@ -108,11 +146,24 @@ def generate_launch_description():
     #     ]
     # )
 
+    # End Cameras
+
     video_recorder_node = Node(
         package="asv_arov_router",
         executable="bluerov_video_recorder",
         name="video_recorder",
         namespace=f'{AROV_NAME}'
+    )
+
+    arov_ekf_external_node = Node(
+        package="asv_arov_localization",
+        executable="arov_ekf_external",
+        name="arov_ekf_external",
+        namespace=f'{AROV_NAME}',
+        parameters=[
+            {'~vehicle_name': AROV_NAME},
+            {'~ros_bag': False}
+        ]
     )
 
     # tf2 static transforms
@@ -145,6 +196,22 @@ def generate_launch_description():
             '--roll', '0.0',
             '--frame-id', "/map",
             '--child-frame-id', f"/{AROV_NAME}/odom"
+        ]
+    )
+
+    arov_base_link_odom_transform_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="arov_base_link_odom_transform",
+        arguments=[
+            '--x', '2.0',
+            '--y', '0.0',
+            '--z', '-1.0',
+            '--yaw', '0.566',
+            '--pitch', '0.0',
+            '--roll', '0.0',
+            '--frame-id', f"/{AROV_NAME}/odom",
+            '--child-frame-id', f"/{AROV_NAME}/base_link"
         ]
     )
 
@@ -258,16 +325,22 @@ def generate_launch_description():
     # End tf2 static transforms
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
-    # ld.add_action(arov_ekf_global_node)
-    ld.add_action(data_logger_node)
-    ld.add_action(gscam2_node)
+
+    ld.add_action(arov_gscam2_node)
+    ld.add_action(arov_apriltag_node)
+
+    ld.add_action(cam1_gscam2_node)
     ld.add_action(cam1_apriltag_node)
-    # ld.add_action(cam2_apriltag_node)
+
+    # ld.add_action(arov_ekf_global_node)
+    ld.add_action(arov_ekf_external_node)
     ld.add_action(video_recorder_node)
+    ld.add_action(data_logger_node)
 
     # tf2 static transforms
     # ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
-    # ld.add_action(arov_odom_map_transform_node)
+    ld.add_action(arov_odom_map_transform_node)
+    ld.add_action(arov_base_link_odom_transform_node)
 
     return ld
