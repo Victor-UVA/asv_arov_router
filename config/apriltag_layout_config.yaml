@@ -16,6 +16,7 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 0
+      frame_id: '/map'
 
     - id: 50
       x: 2.743
@@ -24,6 +25,7 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 0
+      frame_id: '/map'
 
     - id: 49
       x: 4.572
@@ -32,6 +34,7 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 0
+      frame_id: '/map'
 
     - id: 47
       x: 6.401
@@ -40,6 +43,7 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 0
+      frame_id: '/map'
 
     - id: 46
       x: 8.229
@@ -48,6 +52,7 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 0
+      frame_id: '/map'
 
     - id: 45
       x: 10.058
@@ -56,6 +61,7 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 0
+      frame_id: '/map'
 
     - id: 19
       x: 5.25
@@ -64,6 +70,7 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 2.792
+      frame_id: '/map'
 
     - id: 20
       x: 3.5
@@ -72,3 +79,31 @@ apriltags:
       roll: 0
       pitch: 0
       yaw: 3.490
+      frame_id: '/map'
+
+    - id: 7
+      x: 0
+      y: 0.337
+      z: -0.22
+      roll: 0
+      pitch: 0
+      yaw: 3.141
+      frame_id: '/arov/base_link'
+
+    - id: 8
+      x: 0
+      y: -0.337
+      z: -0.22
+      roll: 0
+      pitch: 0
+      yaw: 0
+      frame_id: '/arov/base_link'
+
+    - id: 9
+      x: -0.24
+      y: 0
+      z: -0.22
+      roll: 0
+      pitch: 0
+      yaw: -1.571
+      frame_id: '/arov/base_link'

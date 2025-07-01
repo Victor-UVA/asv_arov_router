@@ -1,0 +1,46 @@
+static_offset: # Leaves the camera facing along and offset from the OptiTrack origin
+  x: 0
+  y: 0
+  z: 0
+  roll: 1.571
+  pitch: 0.0
+  yaw: 1.571
+
+optitrack_rot:  # Rotation to apply to OptiTrack coordinates to get into map
+  roll: 1.571
+  pitch: 0.0
+  yaw: 0.0
+
+cameras:
+  - namespace: '/cam1'
+    frame_id: '/map'
+    x: 1
+    y: 0
+    z: -2
+    roll: 0
+    pitch: 0
+    yaw: -1.571 # Edit this to be the yaw given by OptiTrack
+  - namespace: '/cam2'
+    frame_id: '/map'
+    x: 2
+    y: 0
+    z: 1
+    roll: 0
+    pitch: 0
+    yaw: -3.141 # Edit this to be the yaw given by OptiTrack
+  - namespace: '/cam3'
+    frame_id: '/map'
+    x: -1
+    y: 0
+    z: -2
+    roll: 0
+    pitch: 0
+    yaw: -1.571 # Edit this to be the yaw given by OptiTrack
+  - namespace: '/cam4'
+    frame_id: '/map'
+    x: -2
+    y: 0
+    z: -1
+    roll: 0
+    pitch: 0
+    yaw: 0 # Edit this to be the yaw given by OptiTrack

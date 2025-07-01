@@ -56,16 +56,17 @@ def generate_launch_description():
         package="gscam2",
         executable="gscam_main",
         name="gscam",
-        namespace=f'{AROV_NAME}',
+        namespace='cam1',
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'ost.yaml')}"},
-            {"gscam_config": "udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
-            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
-            {"frame_id": f"/{AROV_NAME}/camera"}
+            # {"gscam_config": "udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
+            # {"frame_id": f"/{AROV_NAME}/camera"}
+            {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
+            {"frame_id": 'map'}
         ],
         remappings=[
-            ('/arov/image_raw', '/arov/image_rect')
+            ('/cam1/image_raw', '/cam1/image_rect')
         ]
     )
 
@@ -75,17 +76,37 @@ def generate_launch_description():
         'apriltag_node_config.yaml'
     )
 
-    apriltag_node = Node(
+    cam1_apriltag_node = Node(
         package="apriltag_ros",
         executable="apriltag_node",
         name="apriltag",
-        namespace=f'{AROV_NAME}',
+        namespace=f'cam1',
         parameters=[
-            config,
-            {"image_rect": "/image_rect"},
-            {"camera_info": "/camera_info"}
+            config
+            # {"image_rect": "/cam1/image_rect"},
+            # {"camera_info": "/cam1/camera_info"}
+        ],
+        remappings=[
+            ('/apriltag/image_rect','/cam1/image_rect'),
+            ('/camera/camera_info','/cam1/camera_info')
         ]
     )
+
+    # cam2_apriltag_node = Node(
+    #     package="apriltag_ros",
+    #     executable="apriltag_node",
+    #     name="apriltag",
+    #     namespace=f'cam2',
+    #     parameters=[
+    #         config
+    #         # {"image_rect": "/image_rect"},
+    #         # {"camera_info": "/camera_info"}
+    #     ],
+    #     remappings=[
+    #         ('/apriltag/image_rect','/cam2/image_rect'),
+    #         ('/camera/camera_info','/cam2/camera_info')
+    #     ]
+    # )
 
     video_recorder_node = Node(
         package="asv_arov_router",
@@ -95,22 +116,6 @@ def generate_launch_description():
     )
 
     # tf2 static transforms
-    # bluerov_camera_transform_node = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="bluerov_camera_transform",
-    #     arguments=[
-    #         '--x', '0.15',
-    #         '--y', '0.0',
-    #         '--z', '0.0',
-    #         '--yaw', '-1.571',
-    #         '--pitch', '0.0',
-    #         '--roll', '-1.571',
-    #         '--frame-id', f"/{AROV_NAME}/base_link",
-    #         '--child-frame-id', f"/{AROV_NAME}_camera"
-    #     ]
-    # )
-
     maddy_odom_map_transform_node = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
@@ -150,8 +155,8 @@ def generate_launch_description():
     )
 
     fixed_apriltags = []
-    with open(apriltags) as stream:
-        try:
+    with open(apriltags) as stream :
+        try :
             apriltags_layout = yaml.safe_load(stream)
             static_rot = Rotation.from_euler('xyz', [apriltags_layout['static_offset']['roll'],
                                                      apriltags_layout['static_offset']['pitch'],
@@ -160,22 +165,31 @@ def generate_launch_description():
                                   apriltags_layout['static_offset']['y'],
                                   apriltags_layout['static_offset']['z']]
 
-            for family in apriltags_layout['apriltags']:
-                for tag in family['tags']:
+            for family in apriltags_layout['apriltags'] :
+                for tag in family['tags'] :
                     tag_rot = (Rotation.from_euler('xyz', [tag['roll'], tag['pitch'], tag['yaw']]) * static_rot).as_euler('xyz')
+                    
+                    if tag['frame_id'] == '/map' :
+                        tag_x = f'{tag['x'] + static_translation[0]}'
+                        tag_y = f'{tag['y'] + static_translation[1]}'
+                        tag_z = f'{tag['z'] + static_translation[2]}'
+                    else :
+                        tag_x = f'{tag['x']}'
+                        tag_y = f'{tag['y']}'
+                        tag_z = f'{tag['z']}'
 
                     ld.add_action(Node(
                         package="tf2_ros",
                         executable="static_transform_publisher",
                         name=f"tag_{family['family']}_{tag['id']}_transform",
                         arguments=[
-                            '--x', f'{tag['x'] + static_translation[0]}',
-                            '--y', f'{tag['y'] + static_translation[1]}',
-                            '--z', f'{tag['z'] + static_translation[2]}',
+                            '--x', f'{tag_x}',
+                            '--y', f'{tag_y}',
+                            '--z', f'{tag_z}',
                             '--yaw', f'{tag_rot[2]}',
                             '--pitch', f'{tag_rot[1]}',
                             '--roll', f'{tag_rot[0]}',
-                            '--frame-id', "/map",
+                            '--frame-id', tag['frame_id'],
                             '--child-frame-id', f"/tag{family['family']}:{tag['id']}_true"
                         ]
                     ))
@@ -196,13 +210,59 @@ def generate_launch_description():
         ]
     )
 
+    cameras = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'external_camera_layout.yaml'
+    )
+
+    with open(cameras) as stream :
+        try :
+            camera_layout = yaml.safe_load(stream)
+            static_rot = Rotation.from_euler('xyz', [camera_layout['static_offset']['roll'],
+                                                     camera_layout['static_offset']['pitch'],
+                                                     camera_layout['static_offset']['yaw']])
+        
+            static_translation = [camera_layout['static_offset']['x'],
+                                  camera_layout['static_offset']['y'],
+                                  camera_layout['static_offset']['z']]
+            
+            optitrack_rot = Rotation.from_euler('xyz', [camera_layout['optitrack_rot']['roll'],
+                                                        camera_layout['optitrack_rot']['pitch'],
+                                                        camera_layout['optitrack_rot']['yaw']])
+
+            for camera in camera_layout['cameras'] :
+                cam_rot = (Rotation.from_euler('xyz', [camera['roll'], camera['pitch'], camera['yaw']]) * static_rot).as_euler('xyz')
+                
+                cam_offset = optitrack_rot.apply([camera['x'], camera['y'], camera['z']])
+
+                ld.add_action(Node(
+                    package="tf2_ros",
+                    executable="static_transform_publisher",
+                    name=f"tag_{family['family']}_{tag['id']}_transform",
+                    arguments=[
+                        '--x', str(cam_offset[0]),
+                        '--y', str(cam_offset[1]),
+                        '--z', str(cam_offset[2]),
+                        '--yaw', f'{cam_rot[2]}',
+                        '--pitch', f'{cam_rot[1]}',
+                        '--roll', f'{cam_rot[0]}',
+                        '--frame-id', camera['frame_id'],
+                        '--child-frame-id', f'{camera['namespace']}/camera'
+                    ]
+                ))
+
+        except yaml.YAMLError as exc:
+            print(exc)
+
     # End tf2 static transforms
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
-    ld.add_action(arov_ekf_global_node)
+    # ld.add_action(arov_ekf_global_node)
     ld.add_action(data_logger_node)
     ld.add_action(gscam2_node)
-    ld.add_action(apriltag_node)
+    ld.add_action(cam1_apriltag_node)
+    # ld.add_action(cam2_apriltag_node)
     ld.add_action(video_recorder_node)
 
     # tf2 static transforms

@@ -1,4 +1,4 @@
-/**:                 # node name
+/cam1/apriltag:                 # node name
       ros__parameters:
         image_transport: raw    # image format
         family: 36h11           # tag family name
@@ -13,3 +13,27 @@
             refine: True        # snap to strong gradients
             sharpening: 0.25    # sharpening of decoded images
             debug: False        # write additional debugging images to current working directory
+
+        tag:
+          ids:    [7, 8, 9]                                                   # tag IDs for which to publish transform
+          frames: ['tag36h11:7_cam1', 'tag36h11:8_cam1', 'tag36h11:9_cam1']   # frame names
+
+/cam2/apriltag:                 # node name
+      ros__parameters:
+        image_transport: raw    # image format
+        family: 36h11           # tag family name
+        size: 0.173             # tag edge size in meter (actual is 0.215)
+        max_hamming: 0          # maximum allowed hamming distance (corrected bits)
+
+        # see "apriltag.h" 'struct apriltag_detector' for more documentation on these optional parameters
+        detector:
+            threads: 1          # number of threads
+            decimate: 2.0       # decimate resolution for quad detection
+            blur: 0.0           # sigma of Gaussian blur for quad detection
+            refine: True        # snap to strong gradients
+            sharpening: 0.25    # sharpening of decoded images
+            debug: False        # write additional debugging images to current working directory
+
+        tag:
+          ids:    [7, 8, 9]                                                   # tag IDs for which to publish transform
+          frames: ['tag36h11:7_cam2', 'tag36h11:8_cam2', 'tag36h11:9_cam2']   # frame names
