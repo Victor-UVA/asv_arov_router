@@ -59,7 +59,14 @@ def generate_launch_description():
         ]
     )
 
-    gscam2_node = Node(
+    # AROV Camera
+    arov_cam_apriltag_config = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'apriltag_node_config.yaml'
+    )
+
+    arov_gscam2_node = Node(
         package="gscam2",
         executable="gscam_main",
         name="gscam",
@@ -110,21 +117,36 @@ def generate_launch_description():
         ]
     )
 
-    config = os.path.join(
+    cam1_apriltag_config = os.path.join(
         get_package_share_directory('asv_arov_router'),
         'config',
         'apriltag_node_config.yaml'
     )
 
-    apriltag_node = Node(
+    cam1_apriltag_node = Node(
         package="apriltag_ros",
         executable="apriltag_node",
         name="apriltag",
+        namespace=f'cam1',
+        parameters=[
+            cam1_apriltag_config
+        ],
+        remappings=[
+            ('/apriltag/image_rect','/cam1/image_rect'),
+            ('/camera/camera_info','/cam1/camera_info')
+        ]
+    )
+
+    # End Cameras
+
+    arov_ekf_external_node = Node(
+        package="asv_arov_localization",
+        executable="arov_ekf_external",
+        name="arov_ekf_external",
         namespace=f'{AROV_NAME}',
         parameters=[
-            config,
-            {"image_rect": "/image_rect"},
-            {"camera_info": "/camera_info"}
+            {'~vehicle_name': AROV_NAME},
+            {'~ros_bag': False}
         ]
     )
 
@@ -191,6 +213,22 @@ def generate_launch_description():
         ]
     )
 
+    arov_base_link_odom_transform_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="arov_base_link_odom_transform",
+        arguments=[
+            '--x', '2.0',
+            '--y', '0.0',
+            '--z', '-1.0',
+            '--yaw', '0.566',
+            '--pitch', '0.0',
+            '--roll', '0.0',
+            '--frame-id', f"/{AROV_NAME}/odom",
+            '--child-frame-id', f"/{AROV_NAME}/base_link"
+        ]
+    )
+
     apriltags = os.path.join(
         get_package_share_directory('asv_arov_router'),
         'config',
@@ -233,9 +271,9 @@ def generate_launch_description():
 
     # End tf2 static transforms
 
-
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
+    ld.add_action(bno055_publisher_node)
 
     # ld.add_action(arov_gscam2_node)
     # ld.add_action(arov_apriltag_node)
