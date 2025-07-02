@@ -12,6 +12,7 @@ class Imu_Publisher(Node):
         port = '/dev/ttyACM0'
         baud = 115200
         self.ser = serial.Serial(port, baud, timeout=1)
+        self.get_logger().info("BNO055 Gyro Publisher started. Reading serial...")
 
     def parse_callback(self, line):
         try:
@@ -57,7 +58,6 @@ class Imu_Publisher(Node):
 def main():
     rclpy.init()
     imu_publisher = Imu_Publisher()
-    rospy.loginfo("BNO055 Gyro Publisher started. Reading serial...")
     rclpy.spin(imu_publisher)
     imu_publisher.destroy_node()
     rclpy.shutdown()
