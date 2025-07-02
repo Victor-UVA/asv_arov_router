@@ -26,7 +26,8 @@ setup(
         'console_scripts': [
             'mavlink_router = asv_arov_router.mavlink_router:main',
             'data_logger = asv_arov_router.data_logger:main',
-            'bluerov_video_recorder = asv_arov_router.bluerov_video_recorder:main'
+            'bluerov_video_recorder = asv_arov_router.bluerov_video_recorder:main',
+            'bno055_publisher = asv_arov_router.bno055_publisher:main',
         ],
     },
 )
