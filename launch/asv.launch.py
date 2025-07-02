@@ -72,7 +72,41 @@ def generate_launch_description():
             {"frame_id": f"/{AROV_NAME}/camera"}
         ],
         remappings=[
-            ('/arov/image_raw', '/arov/image_rect')
+            (f'/{AROV_NAME}/image_raw', f'/{AROV_NAME}/image_rect')
+        ]
+    )
+
+    arov_apriltag_node = Node(
+        package="apriltag_ros",
+        executable="apriltag_node",
+        name="apriltag",
+        namespace=f'{AROV_NAME}',
+        parameters=[
+            arov_cam_apriltag_config
+        ],
+        remappings=[
+            ('/apriltag/image_rect',f'/{AROV_NAME}/image_rect'),
+            ('/camera/camera_info',f'/{AROV_NAME}/camera_info')
+        ]
+    )
+
+    # External Cameras
+
+    cam1_gscam2_node = Node(
+        package="gscam2",
+        executable="gscam_main",
+        name="gscam",
+        namespace='cam1',
+        parameters=[
+            {"camera_name": "narrow_stereo"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'ost.yaml')}"},
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
+            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
+            {"frame_id": '/cam1/camera'}
+        ],
+        remappings=[
+            ('/cam1/image_raw', '/cam1/image_rect')
         ]
     )
 
@@ -202,10 +236,15 @@ def generate_launch_description():
 
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
-    ld.add_action(arov_ekf_global_node)
-    ld.add_action(data_logger_node)
-    ld.add_action(gscam2_node)
-    ld.add_action(apriltag_node)
+
+    # ld.add_action(arov_gscam2_node)
+    # ld.add_action(arov_apriltag_node)
+
+    ld.add_action(cam1_gscam2_node)
+    ld.add_action(cam1_apriltag_node)
+
+    # ld.add_action(arov_ekf_global_node)
+    ld.add_action(arov_ekf_external_node)
     ld.add_action(video_recorder_node)
     ld.add_action(bno055_publisher_node)
 
@@ -213,5 +252,6 @@ def generate_launch_description():
     # ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
     # ld.add_action(arov_odom_map_transform_node)
+    # ld.add_action(arov_base_link_odom_transform_node)
 
     return ld

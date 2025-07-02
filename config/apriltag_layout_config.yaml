@@ -104,6 +104,6 @@ apriltags:
       y: 0
       z: -0.22
       roll: 0
-      pitch: 0
+      pitch: 3.141
       yaw: -1.571
       frame_id: '/arov/base_link'
