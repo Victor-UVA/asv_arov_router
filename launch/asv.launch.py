@@ -235,9 +235,8 @@ def generate_launch_description():
         'apriltag_layout_config.yaml'
     )
 
-    # apriltag_transform_nodes = []
-    with open(apriltags) as stream:
-        try:
+    with open(apriltags) as stream :
+        try :
             apriltags_layout = yaml.safe_load(stream)
             static_rot = Rotation.from_euler('xyz', [apriltags_layout['static_offset']['roll'],
                                                      apriltags_layout['static_offset']['pitch'],
@@ -246,25 +245,79 @@ def generate_launch_description():
                                   apriltags_layout['static_offset']['y'],
                                   apriltags_layout['static_offset']['z']]
 
-            for family in apriltags_layout['apriltags']:
-                for tag in family['tags']:
+            for family in apriltags_layout['apriltags'] :
+                for tag in family['tags'] :
                     tag_rot = (Rotation.from_euler('xyz', [tag['roll'], tag['pitch'], tag['yaw']]) * static_rot).as_euler('xyz')
+                    
+                    if tag['frame_id'] == '/map' :
+                        tag_x = f'{tag['x'] + static_translation[0]}'
+                        tag_y = f'{tag['y'] + static_translation[1]}'
+                        tag_z = f'{tag['z'] + static_translation[2]}'
+                    else :
+                        tag_x = f'{tag['x']}'
+                        tag_y = f'{tag['y']}'
+                        tag_z = f'{tag['z']}'
 
                     ld.add_action(Node(
                         package="tf2_ros",
                         executable="static_transform_publisher",
                         name=f"tag_{family['family']}_{tag['id']}_transform",
                         arguments=[
-                            '--x', f'{tag['x'] + static_translation[0]}',
-                            '--y', f'{tag['y'] + static_translation[1]}',
-                            '--z', f'{tag['z'] + static_translation[2]}',
+                            '--x', f'{tag_x}',
+                            '--y', f'{tag_y}',
+                            '--z', f'{tag_z}',
                             '--yaw', f'{tag_rot[2]}',
                             '--pitch', f'{tag_rot[1]}',
                             '--roll', f'{tag_rot[0]}',
-                            '--frame-id', "/map",
+                            '--frame-id', tag['frame_id'],
                             '--child-frame-id', f"/tag{family['family']}:{tag['id']}_true"
                         ]
                     ))
+
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    cameras = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'external_camera_layout.yaml'
+    )
+
+    with open(cameras) as stream :
+        try :
+            camera_layout = yaml.safe_load(stream)
+            static_rot = Rotation.from_euler('xyz', [camera_layout['static_offset']['roll'],
+                                                     camera_layout['static_offset']['pitch'],
+                                                     camera_layout['static_offset']['yaw']])
+        
+            static_translation = [camera_layout['static_offset']['x'],
+                                  camera_layout['static_offset']['y'],
+                                  camera_layout['static_offset']['z']]
+            
+            optitrack_rot = Rotation.from_euler('xyz', [camera_layout['optitrack_rot']['roll'],
+                                                        camera_layout['optitrack_rot']['pitch'],
+                                                        camera_layout['optitrack_rot']['yaw']])
+
+            for camera in camera_layout['cameras'] :
+                cam_rot = (Rotation.from_euler('xyz', [camera['roll'], camera['pitch'], camera['yaw']]) * static_rot).as_euler('xyz')
+                
+                cam_offset = optitrack_rot.apply([camera['x'], camera['y'], camera['z']])
+
+                ld.add_action(Node(
+                    package="tf2_ros",
+                    executable="static_transform_publisher",
+                    name=f"tag_{family['family']}_{tag['id']}_transform",
+                    arguments=[
+                        '--x', str(cam_offset[0]),
+                        '--y', str(cam_offset[1]),
+                        '--z', str(cam_offset[2]),
+                        '--yaw', f'{cam_rot[2]}',
+                        '--pitch', f'{cam_rot[1]}',
+                        '--roll', f'{cam_rot[0]}',
+                        '--frame-id', camera['frame_id'],
+                        '--child-frame-id', f'{camera['namespace']}/camera'
+                    ]
+                ))
 
         except yaml.YAMLError as exc:
             print(exc)
@@ -273,7 +326,6 @@ def generate_launch_description():
 
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
-    ld.add_action(bno055_publisher_node)
 
     # ld.add_action(arov_gscam2_node)
     # ld.add_action(arov_apriltag_node)
