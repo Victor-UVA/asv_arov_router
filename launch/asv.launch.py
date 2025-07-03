@@ -218,10 +218,10 @@ def generate_launch_description():
         executable="static_transform_publisher",
         name="arov_base_link_odom_transform",
         arguments=[
-            '--x', '2.0',
+            '--x', '0.0',
             '--y', '0.0',
-            '--z', '-1.0',
-            '--yaw', '0.566',
+            '--z', '0.0',
+            '--yaw', '0.0',
             '--pitch', '0.0',
             '--roll', '0.0',
             '--frame-id', f"/{AROV_NAME}/odom",
