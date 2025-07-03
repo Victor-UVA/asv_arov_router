@@ -336,7 +336,7 @@ def generate_launch_description():
     # ld.add_action(arov_ekf_global_node)
     ld.add_action(arov_ekf_external_node)
     ld.add_action(video_recorder_node)
-    ld.add_action(bno055_publisher_node)
+    # ld.add_action(bno055_publisher_node)
 
     # tf2 static transforms
     # ld.add_action(bluerov_camera_transform_node)
