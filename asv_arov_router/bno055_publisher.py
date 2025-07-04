@@ -17,20 +17,9 @@ class Imu_Publisher(Node):
     def parse_callback(self, line):
         try:
             parts = [x.strip() for x in line.split(',')]
-            if len(parts) != 11:
+            if len(parts) != 4:
                 return None
-            # timestamp = int(parts[0])
-            ax = float(parts[1])
-            ay = float(parts[2])
-            az = float(parts[3])
-            gx = float(parts[4])
-            gy = float(parts[5])
-            gz = float(parts[6])
-            qx = float(parts[7])
-            qy = float(parts[8])
-            qz = float(parts[9])
-            qw = float(parts[10])
-            return [ax, ay, az], [gx, gy, gz], [qx, qy, qz, qw]
+            return [float(parts[1]), float(parts[2]), float(parts[3])]
         except:
             return None
 
@@ -38,21 +27,13 @@ class Imu_Publisher(Node):
         line = self.ser.readline().decode('utf-8', errors='ignore').strip()
         data = self.parse_ballback(line)
         if data:
-            accel, gyro, quat = data
             msg = Imu()
             msg.header = Header()
-            msg.header.stamp = rospy.Time.now()
+            msg.header.stamp = rclpy.time.Time()
             msg.header.frame_id = "bno055_link"
-            msg.orientation.x = quat[0]
-            msg.orientation.y = quat[1]
-            msg.orientation.z = quat[2]
-            msg.orientation.w = quat[3]
-            msg.angular_velocity.x = gyro[0]
-            msg.angular_velocity.y = gyro[1]
-            msg.angular_velocity.z = gyro[2]
-            msg.linear_acceleration.x = accel[0]
-            msg.linear_acceleration.y = accel[1]
-            msg.linear_acceleration.z = accel[2]
+            msg.angular_velocity.x = data[0]
+            msg.angular_velocity.y = data[1]
+            msg.angular_velocity.z = data[2]
             self.publisher_.publish(msg)
 
 def main():
