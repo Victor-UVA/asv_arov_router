@@ -112,6 +112,11 @@ class MAVLink_Router(Node):
         self.gps_publisher_ = self.create_publisher(NavSatFix, f'{self.get_namespace()}/gps', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
+        # Set message rates from the vehicle
+        # NOTE: These rates may not be feasible due to throttling by MAVProxy or the PixHawk prioritizing control and internal communication
+        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE, 25)
+        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_LOCAL_POSITION_NED, 25)
+        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_SCALED_IMU2, 25)
 
         # Create timers to aquire and publish data
         publish_timer_period = 0.02 # seconds
@@ -296,6 +301,24 @@ class MAVLink_Router(Node):
             0, 0, 0, 0, 0
         )
 
+    def request_message_interval(self, message_id: int, frequency_hz: float):
+        """
+        Request MAVLink message in a desired frequency,
+        documentation for SET_MESSAGE_INTERVAL:
+            https://mavlink.io/en/messages/common.html#MAV_CMD_SET_MESSAGE_INTERVAL
+
+        Args:
+            message_id (int): MAVLink message ID
+            frequency_hz (float): Desired frequency in Hz
+        """
+        self.master.mav.command_long_send(
+            self.master.target_system, self.master.target_component,
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, 0,
+            message_id, # The MAVLink message ID
+            1e6 / frequency_hz, # The interval between two messages in microseconds. Set to -1 to disable and 0 to request default rate.
+            0, 0, 0, 0, # Unused parameters
+            0, # Target address of message stream (if message has target address fields). 0: Flight-stack default (recommended), 1: address of requestor, 2: broadcast.
+        )
 
     # Subscribers and Support
     def cmd_vel_to_pwm(self):
