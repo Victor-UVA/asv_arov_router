@@ -34,7 +34,11 @@ def generate_launch_description():
             {'device': 'udpin:localhost:14555'},
             {'vehicle_name': ASV_NAME},
             {'rc_override_mapping': [0, 2, 3, 4, 5, 1]},
-            {'has_camera': False}
+            {'has_camera': False},
+            {'max_cmd_vel_linear': 0.33},
+            {'max_cmd_vel_angular': 3.1415/2},
+            {'translation_limit': 500},
+            {'rotation_limit': 250}
         ]
     )
 
@@ -73,7 +77,7 @@ def generate_launch_description():
         namespace=f'{AROV_NAME}',
         parameters=[
             {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'ost.yaml')}"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'arov_cam_air_calibration.yaml')}"},
             {"gscam_config": "udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
             {"frame_id": f"/{AROV_NAME}/camera"}
@@ -106,7 +110,7 @@ def generate_launch_description():
         namespace='cam1',
         parameters=[
             {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'ost.yaml')}"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
             {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
             # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
@@ -154,7 +158,7 @@ def generate_launch_description():
         package="asv_arov_router",
         executable="bluerov_video_recorder",
         name="video_recorder",
-        namespace=f'{AROV_NAME}'
+        namespace='cam1'
     )
 
     bno055_publisher_node = Node(
@@ -308,9 +312,9 @@ def generate_launch_description():
                     executable="static_transform_publisher",
                     name=f"tag_{family['family']}_{tag['id']}_transform",
                     arguments=[
-                        '--x', str(cam_offset[0]),
-                        '--y', str(cam_offset[1]),
-                        '--z', str(cam_offset[2]),
+                        '--x', str(cam_offset[0] + static_translation[0]),
+                        '--y', str(cam_offset[1] + static_translation[1]),
+                        '--z', str(cam_offset[2] + static_translation[2]),
                         '--yaw', f'{cam_rot[2]}',
                         '--pitch', f'{cam_rot[1]}',
                         '--roll', f'{cam_rot[0]}',

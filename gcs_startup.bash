@@ -23,11 +23,12 @@ case $NETWORK in
     ;;
 esac
 
-gst-launch-1.0 udpsrc port=5500 ! queue ! multiudpsink clients=127.0.0.1:5501,127.0.0.1:5502 &
+# gst-launch-1.0 udpsrc port=5500 ! queue ! multiudpsink clients=127.0.0.1:5501,127.0.0.1:5502 &
+gst-launch-1.0 udpsrc port=5600 ! queue ! multiudpsink clients=127.0.0.1:5501,127.0.0.1:5502 & # For direct AROV connection
 
 mavproxy.py --master=udp:0.0.0.0:14553 --out=udpbcast:localhost:14554 --out=udpbcast:localhost:14555 --out=udpbcast:$OPTI:14556 --daemon & # ASV 
 # mavproxy.py --master=udp:0.0.0.0:14550 --out=udpbcast:localhost:14551 --out=udpbcast:localhost:14552 --daemon & # AROV 
-mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:localhost:14552 --daemon &
+mavproxy.py --master=udpin:192.168.2.1:14550 --out=udpbcast:localhost:14551 --out=udpbcast:localhost:14552 --daemon & # For direct AROV connection
 
 ros2 launch asv_arov_router asv.launch.py && fg
 

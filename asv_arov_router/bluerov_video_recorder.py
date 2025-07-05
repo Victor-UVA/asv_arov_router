@@ -18,9 +18,9 @@ class BlueROV_Video_Recorder(Node):
         self.srv = self.create_service(SetRecording, f'{self.get_namespace()}/set_recording', self.set_recording_callback)
         self.recording = False
 
-        self.size = (1920, 1080) # Webcam video input
+        self.size = (2592, 1944) # Barlus video input
         # self.size = (1920, 1080) # BlueROV video input
-        self.frame_rate = 30
+        self.frame_rate = 20
 
         self.output_length = 120 # Length of each output file in seconds
 
@@ -42,7 +42,7 @@ class BlueROV_Video_Recorder(Node):
 
     def start_file(self):
         if self.recording:
-            video_name = f"data_log/videos/bluerov_output_{self.get_clock().now().seconds_nanoseconds()[0]}.mp4"
+            video_name = f"data_log/videos/cam1_output_{self.get_clock().now().seconds_nanoseconds()[0]}.mp4"
             self.video_writer = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), self.frame_rate, self.size)
             self.get_logger().info(f"Starting new recording: {video_name}")
 
