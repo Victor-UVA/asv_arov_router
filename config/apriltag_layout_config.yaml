@@ -81,28 +81,31 @@ apriltags:
       yaw: 3.490
       frame_id: '/map'
 
+      # Left
     - id: 7
       x: 0
-      y: 0.337
-      z: -0.22
+      y: 0.18
+      z: -0.24
       roll: 0
       pitch: 0 #1.571
       yaw: 3.141
       frame_id: '/arov/base_link'
 
+      # Right
     - id: 8
       x: 0
-      y: -0.337
-      z: -0.22
+      y: -0.18
+      z: -0.24
       roll: 0
       pitch: 0 #1.571
       yaw: 0
       frame_id: '/arov/base_link'
 
+      # Back
     - id: 9
-      x: -0.24
+      x: -0.23
       y: 0
-      z: -0.22
+      z: -0.255
       roll: 0
       pitch: 0 #1.571
       yaw: -1.571
