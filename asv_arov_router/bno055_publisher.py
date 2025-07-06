@@ -8,7 +8,7 @@ from std_msgs.msg import Header
 class Imu_Publisher(Node):
     def __init__(self):
         super().__init__('bno055_gyro_publisher')
-        self.publisher_ = self.create_publisher(Imu, '/bno055/gyro', 10)
+        self.publisher_ = self.create_publisher(Imu, f'{self.get_namespace()}/bno055/gyro', 10)
         port = '/dev/ttyACM0'
         baud = 115200
         self.ser = serial.Serial(port, baud, timeout=1)
@@ -25,7 +25,7 @@ class Imu_Publisher(Node):
 
     def gyro_callback(self):
         line = self.ser.readline().decode('utf-8', errors='ignore').strip()
-        data = self.parse_ballback(line)
+        data = self.parse_callback(line)
         if data:
             msg = Imu()
             msg.header = Header()

@@ -150,7 +150,8 @@ def generate_launch_description():
         namespace=f'{AROV_NAME}',
         parameters=[
             {'~vehicle_name': AROV_NAME},
-            {'~ros_bag': False}
+            {'~ros_bag': False},
+            {'~use_gyro': False}
         ]
     )
 
