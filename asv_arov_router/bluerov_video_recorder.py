@@ -10,8 +10,8 @@ class BlueROV_Video_Recorder(Node):
         super().__init__('bluerov_video_recorder')
         self.cam1_sub = self.create_subscription(Image, '/cam1/image_rect', self.listener_callback, 10)
         self.cam2_sub = self.create_subscription(Image, '/cam2/image_rect', self.listener_callback, 10)
-        # self.cam3_sub = self.create_subscription(Image, '/cam3/image_rect', self.listener_callback, 10)
-        # self.cam4_sub = self.create_subscription(Image, '/cam4/image_rect', self.listener_callback, 10)
+        self.cam3_sub = self.create_subscription(Image, '/cam3/image_rect', self.listener_callback, 10)
+        self.cam4_sub = self.create_subscription(Image, '/cam4/image_rect', self.listener_callback, 10)
         # self.arovcam_sub = self.create_subscription(Image, '/arov/image_rect', self.listener_callback, 10)
         self.br = CvBridge()
 
@@ -31,16 +31,17 @@ class BlueROV_Video_Recorder(Node):
     def listener_callback(self, data):
         namespace = data.header.frame_id[:-7]
         if namespace == '/cam1':
-            self.cam1_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
-            cv2.imshow('/cam1', self.cam1_frame)
+            # self.cam1_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
+            self.current_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
+            cv2.imshow('/cam1', self.current_frame)
             cv2.waitKey(1)
         elif namespace == '/cam2':
             self.cam2_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
-            cv2.imshow('/cam2', self.cam2frame)
+            cv2.imshow('/cam2', self.cam2_frame)
             cv2.waitKey(1)
         elif namespace == '/cam3':
             self.cam3_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
-            cv2.imshow('/cam3', self.cam3frame)
+            cv2.imshow('/cam3', self.cam3_frame)
             cv2.waitKey(1)
         elif namespace == '/cam4':
             self.cam4_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)

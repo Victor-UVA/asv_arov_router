@@ -103,6 +103,12 @@ def generate_launch_description():
 
     # External Cameras
 
+    external_cam_apriltag_config = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'apriltag_node_config.yaml'
+    )
+
     cam1_gscam2_node = Node(
         package="gscam2",
         executable="gscam_main",
@@ -121,23 +127,113 @@ def generate_launch_description():
         ]
     )
 
-    cam1_apriltag_config = os.path.join(
-        get_package_share_directory('asv_arov_router'),
-        'config',
-        'apriltag_node_config.yaml'
-    )
-
     cam1_apriltag_node = Node(
         package="apriltag_ros",
         executable="apriltag_node",
         name="apriltag",
         namespace=f'cam1',
         parameters=[
-            cam1_apriltag_config
+            external_cam_apriltag_config
         ],
         remappings=[
             ('/apriltag/image_rect','/cam1/image_rect'),
             ('/camera/camera_info','/cam1/camera_info')
+        ]
+    )
+
+    cam2_gscam2_node = Node(
+        package="gscam2",
+        executable="gscam_main",
+        name="gscam",
+        namespace='cam2',
+        parameters=[
+            {"camera_name": "narrow_stereo"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.13/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
+            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
+            {"frame_id": '/cam2/camera'}
+        ],
+        remappings=[
+            ('/cam2/image_raw', '/cam2/image_rect')
+        ]
+    )
+
+    cam2_apriltag_node = Node(
+        package="apriltag_ros",
+        executable="apriltag_node",
+        name="apriltag",
+        namespace=f'cam2',
+        parameters=[
+            external_cam_apriltag_config
+        ],
+        remappings=[
+            ('/apriltag/image_rect','/cam2/image_rect'),
+            ('/camera/camera_info','/cam2/camera_info')
+        ]
+    )
+
+    cam3_gscam2_node = Node(
+        package="gscam2",
+        executable="gscam_main",
+        name="gscam",
+        namespace='cam3',
+        parameters=[
+            {"camera_name": "narrow_stereo"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
+            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
+            {"frame_id": '/cam3/camera'}
+        ],
+        remappings=[
+            ('/cam3/image_raw', '/cam3/image_rect')
+        ]
+    )
+
+    cam3_apriltag_node = Node(
+        package="apriltag_ros",
+        executable="apriltag_node",
+        name="apriltag",
+        namespace=f'cam3',
+        parameters=[
+            external_cam_apriltag_config
+        ],
+        remappings=[
+            ('/apriltag/image_rect','/cam3/image_rect'),
+            ('/camera/camera_info','/cam3/camera_info')
+        ]
+    )
+
+    cam4_gscam2_node = Node(
+        package="gscam2",
+        executable="gscam_main",
+        name="gscam",
+        namespace='cam4',
+        parameters=[
+            {"camera_name": "narrow_stereo"},
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
+            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
+            {"frame_id": '/cam4/camera'}
+        ],
+        remappings=[
+            ('/cam4/image_raw', '/cam4/image_rect')
+        ]
+    )
+
+    cam4_apriltag_node = Node(
+        package="apriltag_ros",
+        executable="apriltag_node",
+        name="apriltag",
+        namespace=f'cam4',
+        parameters=[
+            external_cam_apriltag_config
+        ],
+        remappings=[
+            ('/apriltag/image_rect','/cam4/image_rect'),
+            ('/camera/camera_info','/cam4/camera_info')
         ]
     )
 
@@ -337,6 +433,15 @@ def generate_launch_description():
 
     ld.add_action(cam1_gscam2_node)
     ld.add_action(cam1_apriltag_node)
+
+    ld.add_action(cam2_gscam2_node)
+    ld.add_action(cam2_apriltag_node)
+
+    # ld.add_action(cam3_gscam2_node)
+    # ld.add_action(cam3_apriltag_node)
+
+    # ld.add_action(cam4_gscam2_node)
+    # ld.add_action(cam4_apriltag_node)
 
     # ld.add_action(arov_ekf_global_node)
     ld.add_action(arov_ekf_external_node)
