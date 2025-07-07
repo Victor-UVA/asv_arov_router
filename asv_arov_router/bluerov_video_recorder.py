@@ -19,6 +19,7 @@ class BlueROV_Video_Recorder(Node):
         self.recording = False
 
         self.size = (2592, 1944) # Barlus cameras covering mort trap video input
+        self.resized = (1920/2592)*self.size
         self.arov_size = (1920, 1080) # BlueROV video input
         self.frame_rate = 20
 
@@ -31,13 +32,15 @@ class BlueROV_Video_Recorder(Node):
     def listener_callback(self, data):
         namespace = data.header.frame_id[:-7]
         if namespace == '/cam1':
-            # self.cam1_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
-            self.current_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
-            cv2.imshow('/cam1', self.current_frame)
+            self.cam1_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
+            # self.current_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
+            cam1_resized = cv2.resize(self.cam1_frame, self.resized)
+            cv2.imshow('/cam1', cam1_resized)
             cv2.waitKey(1)
         elif namespace == '/cam2':
             self.cam2_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
-            cv2.imshow('/cam2', self.cam2_frame)
+            cam2_resized = cv2.resize(self.cam1_frame, self.resized)
+            cv2.imshow('/cam2', cam2_resized)
             cv2.waitKey(1)
         elif namespace == '/cam3':
             self.cam3_frame = cv2.cvtColor(self.br.imgmsg_to_cv2(data), cv2.COLOR_BGR2RGB)
