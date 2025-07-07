@@ -1,6 +1,6 @@
 static_offset: # Leaves the tag facing toward and offset from the OptiTrack origin
-  x: -4.77
-  y: 5
+  x: 0
+  y: 0
   z: 0
   roll: 1.571
   pitch: 0.0
@@ -64,21 +64,21 @@ apriltags:
     #   frame_id: '/map'
 
     - id: 19
-      x: 5.25
-      y: -2.358
-      z: -0.75
+      x: 2.5
+      y: 2.9
+      z: -1.1
       roll: 0
       pitch: 0
-      yaw: 2.792
+      yaw: 3.141
       frame_id: '/map'
 
     - id: 20
-      x: 3.5
-      y: -1.623
-      z: -0.75
+      x: 0.63
+      y: 2.9
+      z: -1.1
       roll: 0
       pitch: 0
-      yaw: 3.490
+      yaw: -2.356
       frame_id: '/map'
 
       # Left

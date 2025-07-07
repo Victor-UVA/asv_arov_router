@@ -114,9 +114,9 @@ class MAVLink_Router(Node):
 
         # Set message rates from the vehicle
         # NOTE: These rates may not be feasible due to throttling by MAVProxy or the PixHawk prioritizing control and internal communication
-        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE, 25)
-        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_LOCAL_POSITION_NED, 25)
-        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_SCALED_IMU2, 25)
+        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE, 10)
+        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_LOCAL_POSITION_NED, 10)
+        self.request_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_SCALED_IMU2, 10)
 
         # Create timers to aquire and publish data
         publish_timer_period = 0.02 # seconds

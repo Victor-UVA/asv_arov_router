@@ -31,8 +31,8 @@
             debug: False        # write additional debugging images to current working directory
 
         tag:
-          ids:    [7, 8, 9]                                                   # tag IDs for which to publish transform
-          frames: ['tag36h11:7_cam1', 'tag36h11:8_cam1', 'tag36h11:9_cam1']   # frame names
+          ids:    [7, 8, 9, 19, 20]                                                   # tag IDs for which to publish transform
+          frames: ['tag36h11:7_cam1', 'tag36h11:8_cam1', 'tag36h11:9_cam1', tag36h11:19_cam1, tag36h11:20_cam1]   # frame names
 
 /cam2/apriltag:                 # node name
       ros__parameters:
@@ -51,5 +51,5 @@
             debug: False        # write additional debugging images to current working directory
 
         tag:
-          ids:    [7, 8, 9]                                                   # tag IDs for which to publish transform
-          frames: ['tag36h11:7_cam2', 'tag36h11:8_cam2', 'tag36h11:9_cam2']   # frame names
+          ids:    [7, 8, 9, 19, 20]                                                   # tag IDs for which to publish transform
+          frames: ['tag36h11:7_cam2', 'tag36h11:8_cam2', 'tag36h11:9_cam2', 'tag36h11:19_cam2', 'tag36h11:20_cam2']   # frame names

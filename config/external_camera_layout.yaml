@@ -16,7 +16,7 @@ cameras:
     frame_id: '/map'
     x: -2
     y: 0
-    z: -2
+    z: -2 # 0.25 from top bolt to camera center
     roll: 0
     pitch: 0
     yaw: -0.785 #-1.571 # Edit this to be the yaw given by OptiTrack
@@ -24,7 +24,7 @@ cameras:
     frame_id: '/map'
     x: 2
     y: 0
-    z: 1
+    z: 1 # 0.25 from top bolt to camera center
     roll: 0
     pitch: 0
     yaw: -3.141 # Edit this to be the yaw given by OptiTrack
