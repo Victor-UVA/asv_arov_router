@@ -21,7 +21,11 @@ def generate_launch_description():
         parameters=[
             {'device': 'udpin:localhost:14552'},
             {'vehicle_name': AROV_NAME},
-            {'rc_override_mapping': [4, 5, 2, 6, 7, 3]}
+            {'rc_override_mapping': [4, 5, 2, 6, 7, 3]},
+            {'max_cmd_vel_linear': 0.33},
+            {'max_cmd_vel_angular': 3.1415/2},
+            {'translation_limit': 500},
+            {'rotation_limit': 500}
         ]
     )
 
@@ -35,10 +39,10 @@ def generate_launch_description():
             {'vehicle_name': ASV_NAME},
             {'rc_override_mapping': [0, 2, 3, 4, 5, 1]},
             {'has_camera': False},
-            {'max_cmd_vel_linear': 0.33},
-            {'max_cmd_vel_angular': 3.1415/2},
+            {'max_cmd_vel_linear': 1.0},
+            {'max_cmd_vel_angular': 1.2},
             {'translation_limit': 500},
-            {'rotation_limit': 250}
+            {'rotation_limit': 500}
         ]
     )
 
@@ -117,7 +121,7 @@ def generate_launch_description():
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.34.13/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
             # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
             {"frame_id": '/cam1/camera'}
@@ -149,7 +153,7 @@ def generate_launch_description():
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.13/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.34.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
             # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
             {"frame_id": '/cam2/camera'}
@@ -181,7 +185,7 @@ def generate_launch_description():
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.34.14/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
             # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
             {"frame_id": '/cam3/camera'}
@@ -213,7 +217,7 @@ def generate_launch_description():
         parameters=[
             {"camera_name": "narrow_stereo"},
             {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.34.12/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
             # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
             {"frame_id": '/cam4/camera'}
@@ -428,19 +432,19 @@ def generate_launch_description():
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
 
-    # ld.add_action(arov_gscam2_node)
+    ld.add_action(arov_gscam2_node)
     # ld.add_action(arov_apriltag_node)
 
     ld.add_action(cam1_gscam2_node)
-    ld.add_action(cam1_apriltag_node)
+    # ld.add_action(cam1_apriltag_node)
 
     ld.add_action(cam2_gscam2_node)
     ld.add_action(cam2_apriltag_node)
 
-    # ld.add_action(cam3_gscam2_node)
-    # ld.add_action(cam3_apriltag_node)
+    ld.add_action(cam3_gscam2_node)
+    ld.add_action(cam3_apriltag_node)
 
-    # ld.add_action(cam4_gscam2_node)
+    ld.add_action(cam4_gscam2_node)
     # ld.add_action(cam4_apriltag_node)
 
     # ld.add_action(arov_ekf_global_node)
