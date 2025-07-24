@@ -68,6 +68,12 @@ def generate_launch_description():
     )
 
     # AROV Camera
+    external_cam_apriltag_config = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'apriltag_node_config.yaml'
+    )
+
     arov_cam_apriltag_config = os.path.join(
         get_package_share_directory('asv_arov_router'),
         'config',
@@ -81,8 +87,8 @@ def generate_launch_description():
         namespace=f'{AROV_NAME}',
         parameters=[
             {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'arov_cam_air_calibration.yaml')}"},
-            {"gscam_config": "udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
+            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
+            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.34.12/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
             # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
             {"frame_id": f"/{AROV_NAME}/camera"}
         ],
@@ -97,7 +103,7 @@ def generate_launch_description():
         name="apriltag",
         namespace=f'{AROV_NAME}',
         parameters=[
-            arov_cam_apriltag_config
+            external_cam_apriltag_config
         ],
         remappings=[
             ('/apriltag/image_rect',f'/{AROV_NAME}/image_rect'),
@@ -106,13 +112,6 @@ def generate_launch_description():
     )
 
     # External Cameras
-
-    external_cam_apriltag_config = os.path.join(
-        get_package_share_directory('asv_arov_router'),
-        'config',
-        'apriltag_node_config.yaml'
-    )
-
     cam1_gscam2_node = Node(
         package="gscam2",
         executable="gscam_main",
@@ -433,18 +432,18 @@ def generate_launch_description():
     ld.add_action(maddy_node)
 
     ld.add_action(arov_gscam2_node)
-    # ld.add_action(arov_apriltag_node)
+    ld.add_action(arov_apriltag_node)
 
-    ld.add_action(cam1_gscam2_node)
+    # ld.add_action(cam1_gscam2_node)
     # ld.add_action(cam1_apriltag_node)
 
-    ld.add_action(cam2_gscam2_node)
-    ld.add_action(cam2_apriltag_node)
+    # ld.add_action(cam2_gscam2_node)
+    # ld.add_action(cam2_apriltag_node)
 
-    ld.add_action(cam3_gscam2_node)
-    ld.add_action(cam3_apriltag_node)
+    # ld.add_action(cam3_gscam2_node)
+    # ld.add_action(cam3_apriltag_node)
 
-    ld.add_action(cam4_gscam2_node)
+    # ld.add_action(cam4_gscam2_node)
     # ld.add_action(cam4_apriltag_node)
 
     # ld.add_action(arov_ekf_global_node)
