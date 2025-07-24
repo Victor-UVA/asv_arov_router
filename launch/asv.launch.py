@@ -269,21 +269,21 @@ def generate_launch_description():
     )
 
     # tf2 static transforms
-    # bluerov_camera_transform_node = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="bluerov_camera_transform",
-    #     arguments=[
-    #         '--x', '0.15',
-    #         '--y', '0.0',
-    #         '--z', '0.0',
-    #         '--yaw', '-1.571',
-    #         '--pitch', '0.0',
-    #         '--roll', '-1.571',
-    #         '--frame-id', f"/{AROV_NAME}/base_link",
-    #         '--child-frame-id', f"/{AROV_NAME}_camera"
-    #     ]
-    # )
+    bluerov_camera_transform_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="bluerov_camera_transform",
+        arguments=[
+            '--x', '0.0',
+            '--y', '0.0',
+            '--z', '0.0',
+            '--yaw', '-1.571',
+            '--pitch', '0.0',
+            '--roll', '-1.571',
+            '--frame-id', f"/{AROV_NAME}/base_link",
+            '--child-frame-id', f"/{AROV_NAME}_camera"
+        ]
+    )
 
     maddy_odom_map_transform_node = Node(
         package="tf2_ros",
@@ -452,7 +452,7 @@ def generate_launch_description():
     # ld.add_action(bno055_publisher_node)
 
     # tf2 static transforms
-    # ld.add_action(bluerov_camera_transform_node)
+    ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
     # ld.add_action(arov_odom_map_transform_node)
     # ld.add_action(arov_base_link_odom_transform_node)
