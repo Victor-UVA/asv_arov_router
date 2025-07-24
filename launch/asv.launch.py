@@ -274,14 +274,14 @@ def generate_launch_description():
         executable="static_transform_publisher",
         name="bluerov_camera_transform",
         arguments=[
-            '--x', '0.0',
+            '--x', '0.5',
             '--y', '0.0',
             '--z', '0.0',
             '--yaw', '-1.571',
             '--pitch', '0.0',
             '--roll', '-1.571',
             '--frame-id', f"/{AROV_NAME}/base_link",
-            '--child-frame-id', f"/{AROV_NAME}_camera"
+            '--child-frame-id', f"/{AROV_NAME}/camera"
         ]
     )
 
@@ -455,6 +455,6 @@ def generate_launch_description():
     ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
     # ld.add_action(arov_odom_map_transform_node)
-    # ld.add_action(arov_base_link_odom_transform_node)
+    ld.add_action(arov_base_link_odom_transform_node)
 
     return ld
