@@ -242,10 +242,10 @@ def generate_launch_description():
 
     # End Cameras
 
-    arov_ekf_external_node = Node(
+    arov_ekf_onboard_node = Node(
         package="asv_arov_localization",
-        executable="arov_ekf_external",
-        name="arov_ekf_external",
+        executable="arov_ekf_onboard",
+        name="arov_ekf_onboard",
         namespace=f'{AROV_NAME}',
         parameters=[
             {'~vehicle_name': AROV_NAME},
@@ -447,7 +447,7 @@ def generate_launch_description():
     # ld.add_action(cam4_apriltag_node)
 
     # ld.add_action(arov_ekf_global_node)
-    ld.add_action(arov_ekf_external_node)
+    ld.add_action(arov_ekf_onboard_node)
     ld.add_action(video_recorder_node)
     # ld.add_action(bno055_publisher_node)
 
