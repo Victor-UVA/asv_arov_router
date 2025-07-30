@@ -468,6 +468,6 @@ def generate_launch_description():
     # ld.add_action(bluerov_camera_transform_node)
     ld.add_action(maddy_odom_map_transform_node)
     # ld.add_action(arov_odom_map_transform_node)
-    # ld.add_action(arov_base_link_odom_transform_node)
+    ld.add_action(arov_base_link_odom_transform_node)
 
     return ld
