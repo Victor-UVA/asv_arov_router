@@ -3,8 +3,8 @@ static_offset: # Leaves the tag facing toward and offset from the OptiTrack orig
   y: 0
   z: 0
   roll: 1.571
-  pitch: 0.0
-  yaw: 0.0
+  pitch: 0
+  yaw: 1.571
 
 apriltags:
   - family: 36h11
@@ -63,68 +63,29 @@ apriltags:
     #   yaw: 0
     #   frame_id: '/map'
 
-    - id: 18
-      x: 2.13
-      y: 1.69
-      z: -1.05
+    - id: 3
+      x: 0
+      y: -2
+      z: 1.455
       roll: 0
       pitch: 0
-      yaw: 3.3
+      yaw: -0.05
       frame_id: '/map'
 
-    - id: 17
-      x: 3.77
-      y: 1.07
-      z: -1.02
+    - id: 4
+      x: 0
+      y: 0
+      z: 1.45
       roll: 0
       pitch: 0
-      yaw: 2.8
+      yaw: 0
       frame_id: '/map'
     
-    - id: 19
-      x: 5.712
-      y: 4.07
-      z: -0.978
+    - id: 5
+      x: 0
+      y: 2
+      z: 1.45
       roll: 0
       pitch: 0
-      yaw: 0.151
+      yaw: 0.05
       frame_id: '/map'
-
-    - id: 20
-      x: 7.5
-      y: 3.73
-      z: -0.99
-      roll: 0
-      pitch: 0
-      yaw: 0.6
-      frame_id: '/map'
-
-      # Left
-    - id: 7
-      x: 0.04
-      y: 0.2
-      z: -0.24
-      roll: 0
-      pitch: 0 #1.571
-      yaw: 3.1
-      frame_id: '/arov/base_link'
-
-      # Right
-    - id: 8
-      x: 0.025
-      y: -0.20
-      z: -0.24
-      roll: 0.15
-      pitch: 0 #1.571
-      yaw: -0.15
-      frame_id: '/arov/base_link'
-
-      # Back
-    - id: 9
-      x: -0.23
-      y: 0
-      z: -0.255
-      roll: 0
-      pitch: 0 #1.571
-      yaw: -1.571
-      frame_id: '/arov/base_link'
