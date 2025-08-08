@@ -42,15 +42,65 @@ def generate_launch_description():
         ]
     )
 
-    data_logger_node = Node(
-        package="asv_arov_router",
-        executable="data_logger",
-        name="data_logger",
-        parameters=[
-            {'arov_name': AROV_NAME},
-            {'asv_name': ASV_NAME}
-        ]
+    # Camera set up
+    camera_setup = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'camera_configs.yaml'
     )
+
+    cam_apriltag_config = os.path.join(
+        get_package_share_directory('asv_arov_router'),
+        'config',
+        'apriltag_node_config.yaml'
+    )
+
+    camera_list = []
+    display_list = []
+    frame_rates = []
+
+    with open(camera_setup) as stream :
+        try :
+            camera_setups = yaml.safe_load(stream)
+
+            for camera in camera_setups['cameras'] :
+                ld.add_action(Node(
+                    package="gscam2",
+                    executable="gscam_main",
+                    name="gscam",
+                    namespace=camera['namespace'],
+                    parameters=[
+                        {"camera_name": "narrow_stereo"},
+                        {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', camera['calibration'])}"},
+                        {"gscam_config": camera['gscam']},
+                        {"frame_id": f"{camera['namespace']}/camera"}
+                    ],
+                    remappings=[
+                        (f'{camera['namespace']}/image_raw', f'{camera['namespace']}/image_rect')
+                    ]
+                ))
+
+                camera_list.append(camera['namespace'])
+                display_list.append(camera['display'])
+                frame_rates.append(camera['rate'])
+
+                if camera['tags'] :
+                    ld.add_action(Node(
+                        package="apriltag_ros",
+                        executable="apriltag_node",
+                        name="apriltag",
+                        namespace=camera['namespace'],
+                        parameters=[
+                            cam_apriltag_config
+                        ],
+                        remappings=[
+                            ('/apriltag/image_rect',f'{camera['namespace']}/image_rect'),
+                            ('/camera/camera_info',f'{camera['namespace']}/camera_info')
+                        ]
+                    ))
+
+        except yaml.YAMLError as exc:
+            print(exc)
 
     arov_ekf_global_node = Node(
         package="asv_arov_localization",
@@ -62,182 +112,6 @@ def generate_launch_description():
             {'~ros_bag': False}
         ]
     )
-
-    # AROV Camera
-    arov_cam_apriltag_config = os.path.join(
-        get_package_share_directory('asv_arov_router'),
-        'config',
-        'apriltag_node_config.yaml'
-    )
-
-    arov_gscam2_node = Node(
-        package="gscam2",
-        executable="gscam_main",
-        name="gscam",
-        namespace=f'{AROV_NAME}',
-        parameters=[
-            {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'arov_cam_air_calibration.yaml')}"},
-            {"gscam_config": "udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from BlueROV camera
-            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam
-            {"frame_id": f"/{AROV_NAME}/camera"}
-        ],
-        remappings=[
-            (f'/{AROV_NAME}/image_raw', f'/{AROV_NAME}/image_rect')
-        ]
-    )
-
-    arov_apriltag_node = Node(
-        package="apriltag_ros",
-        executable="apriltag_node",
-        name="apriltag",
-        namespace=f'{AROV_NAME}',
-        parameters=[
-            arov_cam_apriltag_config
-        ],
-        remappings=[
-            ('/apriltag/image_rect',f'/{AROV_NAME}/image_rect'),
-            ('/camera/camera_info',f'/{AROV_NAME}/camera_info')
-        ]
-    )
-
-    # External Cameras
-
-    external_cam_apriltag_config = os.path.join(
-        get_package_share_directory('asv_arov_router'),
-        'config',
-        'apriltag_node_config.yaml'
-    )
-
-    cam1_gscam2_node = Node(
-        package="gscam2",
-        executable="gscam_main",
-        name="gscam",
-        namespace='cam1',
-        parameters=[
-            {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
-            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
-            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
-            {"frame_id": '/cam1/camera'}
-        ],
-        remappings=[
-            ('/cam1/image_raw', '/cam1/image_rect')
-        ]
-    )
-
-    cam1_apriltag_node = Node(
-        package="apriltag_ros",
-        executable="apriltag_node",
-        name="apriltag",
-        namespace=f'cam1',
-        parameters=[
-            external_cam_apriltag_config
-        ],
-        remappings=[
-            ('/apriltag/image_rect','/cam1/image_rect'),
-            ('/camera/camera_info','/cam1/camera_info')
-        ]
-    )
-
-    cam2_gscam2_node = Node(
-        package="gscam2",
-        executable="gscam_main",
-        name="gscam",
-        namespace='cam2',
-        parameters=[
-            {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.13/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
-            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
-            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
-            {"frame_id": '/cam2/camera'}
-        ],
-        remappings=[
-            ('/cam2/image_raw', '/cam2/image_rect')
-        ]
-    )
-
-    cam2_apriltag_node = Node(
-        package="apriltag_ros",
-        executable="apriltag_node",
-        name="apriltag",
-        namespace=f'cam2',
-        parameters=[
-            external_cam_apriltag_config
-        ],
-        remappings=[
-            ('/apriltag/image_rect','/cam2/image_rect'),
-            ('/camera/camera_info','/cam2/camera_info')
-        ]
-    )
-
-    cam3_gscam2_node = Node(
-        package="gscam2",
-        executable="gscam_main",
-        name="gscam",
-        namespace='cam3',
-        parameters=[
-            {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
-            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
-            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
-            {"frame_id": '/cam3/camera'}
-        ],
-        remappings=[
-            ('/cam3/image_raw', '/cam3/image_rect')
-        ]
-    )
-
-    cam3_apriltag_node = Node(
-        package="apriltag_ros",
-        executable="apriltag_node",
-        name="apriltag",
-        namespace=f'cam3',
-        parameters=[
-            external_cam_apriltag_config
-        ],
-        remappings=[
-            ('/apriltag/image_rect','/cam3/image_rect'),
-            ('/camera/camera_info','/cam3/camera_info')
-        ]
-    )
-
-    cam4_gscam2_node = Node(
-        package="gscam2",
-        executable="gscam_main",
-        name="gscam",
-        namespace='cam4',
-        parameters=[
-            {"camera_name": "narrow_stereo"},
-            {"camera_info_url": f"file://{os.path.join(get_package_share_directory('asv_arov_router'), 'config', 'barlus_stevens_water_calibration.yaml')}"},
-            {"gscam_config": "rtspsrc location=\"rtsp://admin:@169.254.209.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for video from Barlus camera
-            # For testing: gst-launch-1.0 rtspsrc location="rtsp://admin:@169.254.209.11/h264_stream" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
-            # {"gscam_config": "v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert"}, # Use for testing with laptop webcam # ! application/x-rtp, payload=96
-            {"frame_id": '/cam4/camera'}
-        ],
-        remappings=[
-            ('/cam4/image_raw', '/cam4/image_rect')
-        ]
-    )
-
-    cam4_apriltag_node = Node(
-        package="apriltag_ros",
-        executable="apriltag_node",
-        name="apriltag",
-        namespace=f'cam4',
-        parameters=[
-            external_cam_apriltag_config
-        ],
-        remappings=[
-            ('/apriltag/image_rect','/cam4/image_rect'),
-            ('/camera/camera_info','/cam4/camera_info')
-        ]
-    )
-
-    # End Cameras
 
     arov_ekf_external_node = Node(
         package="asv_arov_localization",
@@ -255,7 +129,13 @@ def generate_launch_description():
         package="asv_arov_router",
         executable="bluerov_video_recorder",
         name="video_recorder",
-        namespace='cam1'
+        parameters=[
+            {'camera_list': camera_list},
+            {'display_list': display_list},
+            {'frame_rates': frame_rates},
+            {'display_size': [1920, 1080]},
+            {'display_layout': [1, 1]}
+        ]
     )
 
     bno055_publisher_node = Node(
@@ -264,23 +144,6 @@ def generate_launch_description():
         name="bno055_publisher",
         namespace=f'{AROV_NAME}',
     )
-
-    # tf2 static transforms
-    # bluerov_camera_transform_node = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="bluerov_camera_transform",
-    #     arguments=[
-    #         '--x', '0.15',
-    #         '--y', '0.0',
-    #         '--z', '0.0',
-    #         '--yaw', '-1.571',
-    #         '--pitch', '0.0',
-    #         '--roll', '-1.571',
-    #         '--frame-id', f"/{AROV_NAME}/base_link",
-    #         '--child-frame-id', f"/{AROV_NAME}_camera"
-    #     ]
-    # )
 
     maddy_odom_map_transform_node = Node(
         package="tf2_ros",
@@ -427,21 +290,6 @@ def generate_launch_description():
 
     ld.add_action(bluerov_node)
     ld.add_action(maddy_node)
-
-    # ld.add_action(arov_gscam2_node)
-    # ld.add_action(arov_apriltag_node)
-
-    ld.add_action(cam1_gscam2_node)
-    ld.add_action(cam1_apriltag_node)
-
-    ld.add_action(cam2_gscam2_node)
-    ld.add_action(cam2_apriltag_node)
-
-    # ld.add_action(cam3_gscam2_node)
-    # ld.add_action(cam3_apriltag_node)
-
-    # ld.add_action(cam4_gscam2_node)
-    # ld.add_action(cam4_apriltag_node)
 
     # ld.add_action(arov_ekf_global_node)
     ld.add_action(arov_ekf_external_node)

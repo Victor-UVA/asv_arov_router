@@ -1,0 +1,37 @@
+cameras:
+  - namespace: '/arov'
+    gscam: 'udpsrc port=5501 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert'
+    calibration: 'arov_cam_air_calibration.yaml'
+    tags: False
+    rate: 25
+    display: True
+  - namespace: '/cam1'
+    gscam: 'rtspsrc location=\"rtsp://admin:@169.254.34.12/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert'
+    calibration: 'barlus_uva_air_calibration.yaml'
+    tags: False
+    rate: 20
+    display: True
+  - namespace: '/cam2'
+    gscam: 'rtspsrc location=\"rtsp://admin:@169.254.34.13/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert'
+    calibration: 'barlus_uva_air_calibration.yaml'
+    tags: False
+    rate: 20
+    display: False
+  - namespace: '/cam3'
+    gscam: 'rtspsrc location=\"rtsp://admin:@169.254.34.11/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert'
+    calibration: 'barlus_stevens_water_calibration.yaml'
+    tags: False
+    rate: 20
+    display: False
+  - namespace: '/cam4'
+    gscam: 'rtspsrc location=\"rtsp://admin:@169.254.34.14/h264_stream\" latency=0 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! decodebin ! videoconvert ! video/x-raw,format=RGB ! queue ! videoconvert'
+    calibration: 'barlus_stevens_water_calibration.yaml'
+    tags: False
+    rate: 20
+    display: False
+  - namespace: '/web1'
+    gscam: 'v4l2src name=cam_src ! decodebin ! videoconvert ! videoscale ! video/x-raw,format=RGB ! queue ! videoconvert'
+    calibration: 'arov_cam_air_calibration.yaml'
+    tags: False
+    rate: 30
+    display: False
