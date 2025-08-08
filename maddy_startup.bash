@@ -1,12 +1,12 @@
 #!/usr/bin/bash
 
 # Run from home/maddy on the ASV computer
-# bash ros2_ws/src/asv_arov_router/maddy_startup.bash
+# bash ros2_ws/src/asv_arov_router/maddy_startup.bash PORTABLE
 echo "Today is " `date`
 # cd ~/ros2_ws
 # source install/setup.bash
 
-NETWORK=VICTOR
+NETWORK=$1
 
 case $NETWORK in
 
